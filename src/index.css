@@ -370,7 +370,7 @@ h1,h2,h3,h4{
   background:var(--ink);
   color:var(--parchment);
   overflow:hidden;
-  padding:120px 0 140px;
+  padding:48px 0 96px;
 }
 .hero::before{
   content:'';
@@ -1336,7 +1336,7 @@ table.data-table{ width:100%; border-collapse:collapse; }
 
   /* Hero Section */
   .hero {
-    padding: 50px 0 70px;
+    padding: 32px 0 56px;
   }
 
   .hero h1 {
