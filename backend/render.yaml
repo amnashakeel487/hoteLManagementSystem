@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: stayfolio-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: FLASK_CONFIG
+        value: production
+      - key: FLASK_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+  
+  - type: pserv
+    name: stayfolio-db
+    env: docker
+    plan: free

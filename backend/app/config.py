@@ -30,11 +30,15 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    # Railway PostgreSQL URL handling
+    # Handle both PostgreSQL and MySQL for different platforms
     DATABASE_URL = os.environ.get('DATABASE_URL')
-    if DATABASE_URL and DATABASE_URL.startswith('postgres://'):
-        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://')
-    SQLALCHEMY_DATABASE_URI = DATABASE_URL or 'postgresql://user:password@localhost/hotel_platform'
+    if DATABASE_URL:
+        if DATABASE_URL.startswith('postgres://'):
+            DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://')
+        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    else:
+        # Default MySQL for PythonAnywhere
+        SQLALCHEMY_DATABASE_URI = 'mysql://username:password@hostname/database'
 
 class TestingConfig(Config):
     TESTING = True
