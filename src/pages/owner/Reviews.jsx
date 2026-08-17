@@ -42,13 +42,7 @@ export default function Reviews() {
       if (hRes.ok) {
         const hData = await hRes.json();
         setHotel(hData.hotel);
-        if (hData.hotel?.id) {
-          const rRes = await apiCall(`/api/hotels/${hData.hotel.id}/reviews`);
-          if (rRes.ok) {
-            const rData = await rRes.json();
-            setReviews(rData.reviews || []);
-          }
-        }
+        setReviews(hData.hotel?.reviews || []);
       }
     } catch (err) {
       console.error('Error loading reviews:', err);

@@ -42,13 +42,7 @@ export default function BookingsCalendar() {
       if (hRes.ok) {
         const hData = await hRes.json();
         setHotel(hData.hotel);
-        if (hData.hotel?.id) {
-          const bRes = await apiCall(`/api/hotels/${hData.hotel.id}/bookings`);
-          if (bRes.ok) {
-            const bData = await bRes.json();
-            setBookings(bData.bookings || []);
-          }
-        }
+        setBookings(hData.hotel?.bookings || []);
       }
     } catch (err) {
       console.error('Error loading bookings:', err);

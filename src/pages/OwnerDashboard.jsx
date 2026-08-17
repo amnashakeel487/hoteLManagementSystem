@@ -53,22 +53,8 @@ export default function OwnerDashboard() {
         const data = await res.json();
         setHotel(data.hotel);
         setRooms(data.hotel.rooms || []);
-
-        if (data.hotel?.id) {
-          // Fetch real bookings
-          const bRes = await apiCall(`/api/hotels/${data.hotel.id}/bookings`);
-          if (bRes.ok) {
-            const bData = await bRes.json();
-            setBookings(bData.bookings || []);
-          }
-
-          // Fetch reviews
-          const rRes = await apiCall(`/api/hotels/${data.hotel.id}/reviews`);
-          if (rRes.ok) {
-            const rData = await rRes.json();
-            setReviews(rData.reviews || []);
-          }
-        }
+        setBookings(data.hotel.bookings || []);
+        setReviews(data.hotel.reviews || []);
       }
     } catch (err) {
       console.error(err);

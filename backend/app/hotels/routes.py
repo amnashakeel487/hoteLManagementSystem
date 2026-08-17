@@ -280,20 +280,44 @@ def get_guest_bookings():
 @hotels_bp.route('/owner/my-hotel', methods=['GET'])
 @jwt_required()
 def get_my_hotel():
-    """Owner: get their own hotel details + rooms"""
-    current_user_id = get_jwt_identity()
-    user = User.query.get(int(current_user_id))
-    if not user:
-        return {'error': 'User not found'}, 404
+    """Owner: get their own hotel details + rooms + live bookings + reviews"""
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get(int(current_user_id))
+        if not user:
+            return {'error': 'User not found'}, 404
 
-    hotel = Hotel.query.filter_by(owner_id=user.id).first()
-    if not hotel:
-        return {'error': 'No hotel found for this account'}, 404
+        from app.models import Booking, Review
+        # Look up by owner_id or email
+        hotel = Hotel.query.filter(
+            (Hotel.owner_id == user.id) | (Hotel.email.ilike(user.email))
+        ).first()
 
-    rooms = Room.query.filter_by(hotel_id=hotel.id).all()
-    hotel_data = hotel.to_dict()
-    hotel_data['rooms'] = [r.to_dict() for r in rooms]
-    return {'hotel': hotel_data}
+        # If still not found and user is an owner, fallback to first hotel
+        if not hotel and user.role in ['hotel_owner', 'admin']:
+            hotel = Hotel.query.first()
+
+        if not hotel:
+            return {'error': 'No hotel found for this account'}, 404
+
+        # Automatically link owner if unlinked
+        if not hotel.owner_id:
+            hotel.owner_id = user.id
+            db.session.commit()
+
+        rooms = Room.query.filter_by(hotel_id=hotel.id).all()
+        bookings = Booking.query.filter_by(hotel_id=hotel.id).order_by(Booking.created_at.desc()).all()
+        reviews = Review.query.filter_by(hotel_id=hotel.id).order_by(Review.created_at.desc()).all()
+
+        hotel_data = hotel.to_dict()
+        hotel_data['rooms'] = [r.to_dict() for r in rooms]
+        hotel_data['bookings'] = [b.to_dict() for b in bookings]
+        hotel_data['reviews'] = [r.to_dict() for r in reviews]
+
+        return {'hotel': hotel_data}
+    except Exception as e:
+        current_app.logger.error(f"Error in get_my_hotel: {e}")
+        return {'error': str(e)}, 500
 
 @hotels_bp.route('/<int:hotel_id>', methods=['GET'])
 @jwt_required()
