@@ -30,15 +30,12 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    # Handle both PostgreSQL and MySQL for different platforms
-    DATABASE_URL = os.environ.get('DATABASE_URL')
-    if DATABASE_URL:
-        if DATABASE_URL.startswith('postgres://'):
-            DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://')
-        SQLALCHEMY_DATABASE_URI = DATABASE_URL
-    else:
-        # Default MySQL for PythonAnywhere
-        SQLALCHEMY_DATABASE_URI = 'mysql://username:password@hostname/database'
+    # Handle both PostgreSQL URL formats
+    DATABASE_URL = os.environ.get('DATABASE_URL', '')
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://')
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL or 'sqlite:///hotel_platform.db'
+
 
 class TestingConfig(Config):
     TESTING = True
