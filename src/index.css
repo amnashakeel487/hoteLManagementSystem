@@ -912,10 +912,10 @@ textarea.input{ resize:vertical; min-height:100px; }
 .app-sidebar{
   width:264px; flex:none;
   background:var(--ink); color:var(--parchment);
-  padding:28px 20px; display:flex; flex-direction:column;
+  padding:24px 16px; display:flex; flex-direction:column;
   position:sticky; top:0; height:100vh;
 }
-.app-sidebar .brand{ color:var(--parchment); padding:0 8px; margin-bottom:36px; }
+.app-sidebar .brand{ color:var(--parchment); padding:0; margin-bottom:0; }
 .side-nav{ display:flex; flex-direction:column; gap:2px; flex:1; }
 .side-nav a{
   display:flex; align-items:center; gap:12px;

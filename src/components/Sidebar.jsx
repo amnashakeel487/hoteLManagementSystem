@@ -31,8 +31,8 @@ export default function Sidebar({ role = 'owner', items, who }) {
       />
 
       <aside className={`app-sidebar ${isOpen ? 'open' : ''}`}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '36px', padding: '0 8px' }}>
-          <Link to="/" className="brand" onClick={() => setIsOpen(false)}>
+        <div className="sidebar-brand-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', padding: '0 8px' }}>
+          <Link to="/" className="brand" onClick={() => setIsOpen(false)} style={{ color: 'var(--parchment)', display: 'inline-flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <span className="mark"></span> Stayfolio
           </Link>
           <button 
