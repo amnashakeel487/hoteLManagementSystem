@@ -50,13 +50,23 @@ export default function MyBookings() {
     setSearched(false);
 
     try {
-      const params = new URLSearchParams({ email: email.trim() });
+      const params = new URLSearchParams({ email: email.trim().toLowerCase() });
       if (ref.trim()) params.append('ref', ref.trim());
 
-      const res = await fetch(`${API_BASE_URL}/api/hotels/public/guest-bookings?${params}`);
-      const data = await res.json();
+      const res = await fetch(`${API_BASE_URL}/api/hotels/public/guest-bookings?${params}`, {
+        headers: { 'Accept': 'application/json' }
+      });
 
-      if (!res.ok) throw new Error(data.error || 'Lookup failed');
+      const contentType = res.headers.get('content-type') || '';
+      let data = {};
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(res.ok ? 'Unexpected response from server.' : 'Server is waking up or updating. Please try again in 10 seconds.');
+      }
+
+      if (!res.ok) throw new Error(data.error || 'Unable to find bookings for this email.');
 
       setBookings(data.bookings || []);
       setSearched(true);

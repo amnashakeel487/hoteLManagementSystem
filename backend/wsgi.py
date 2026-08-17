@@ -10,14 +10,15 @@ app = create_app(config_name)
 with app.app_context():
     try:
         db.create_all()
-        # Drop NOT NULL constraint on owner_id in PostgreSQL if it was created previously
+        # Ensure schema migrations for new columns
         try:
             with db.engine.connect() as conn:
                 conn.execute(db.text("ALTER TABLE hotel ALTER COLUMN owner_id DROP NOT NULL;"))
+                conn.execute(db.text("ALTER TABLE booking ADD COLUMN IF NOT EXISTS guest_phone VARCHAR(30);"))
                 conn.commit()
-                print("✅ Set hotel.owner_id to nullable in database.")
+                print("✅ Database schema verified and updated.")
         except Exception as alter_err:
-            pass
+            print(f"⚠️ Schema update notice: {alter_err}")
 
         if not User.query.first():
             print("🌱 Empty database detected - auto seeding initial data...")

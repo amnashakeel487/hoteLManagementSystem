@@ -179,9 +179,20 @@ class Booking(db.Model):
     cleaning_requests = db.relationship('CleaningRequest', backref='booking', lazy='dynamic')
     
     def to_dict(self):
-        nights = (self.check_out - self.check_in).days if self.check_in and self.check_out else 1
-        hotel = Hotel.query.get(self.hotel_id)
-        room = Room.query.get(self.room_id)
+        hotel = Hotel.query.get(self.hotel_id) if self.hotel_id else None
+        room = Room.query.get(self.room_id) if self.room_id else None
+        
+        check_in_str = self.check_in.isoformat() if hasattr(self.check_in, 'isoformat') else str(self.check_in or '')
+        check_out_str = self.check_out.isoformat() if hasattr(self.check_out, 'isoformat') else str(self.check_out or '')
+        created_at_str = self.created_at.isoformat() if hasattr(self.created_at, 'isoformat') else str(self.created_at or '')
+        
+        nights = 1
+        try:
+            if hasattr(self, 'check_in') and hasattr(self, 'check_out') and self.check_in and self.check_out:
+                nights = (self.check_out - self.check_in).days
+        except Exception:
+            nights = 1
+
         return {
             'id': self.id,
             'reference': f'STAY-{self.id:04d}',
@@ -196,13 +207,13 @@ class Booking(db.Model):
             'room_price': float(room.price) if room and room.price else None,
             'guest_name': self.guest_name,
             'guest_email': self.guest_email,
-            'guest_phone': self.guest_phone,
-            'check_in': self.check_in.isoformat(),
-            'check_out': self.check_out.isoformat(),
-            'nights': nights,
-            'status': self.status,
+            'guest_phone': getattr(self, 'guest_phone', None),
+            'check_in': check_in_str,
+            'check_out': check_out_str,
+            'nights': max(1, nights),
+            'status': self.status or 'pending',
             'total_amount': float(self.total_amount) if self.total_amount else None,
-            'created_at': self.created_at.isoformat()
+            'created_at': created_at_str
         }
 
 class Review(db.Model):

@@ -181,19 +181,23 @@ export default function OwnerDashboard() {
     );
   }
 
-  // Calculate metrics
+  // Calculate metrics from live data
   const pendingBookings = bookings.filter(b => b.status === 'pending').length;
-  const currentMonthRevenue = analytics?.current_month?.revenue || 0;
-  const currentMonthBookings = analytics?.current_month?.bookings || 0;
-  const averageRating = analytics?.rating?.average || 0;
-  const totalReviews = analytics?.rating?.total_reviews || 0;
+  const currentMonthBookings = bookings.length;
+  const currentMonthRevenue = bookings
+    .filter(b => b.status === 'approved')
+    .reduce((sum, b) => sum + (parseFloat(b.total_amount) || 0), 0);
+  const averageRating = reviews.length > 0 
+    ? (reviews.reduce((sum, r) => sum + (r.rating || 5), 0) / reviews.length).toFixed(1)
+    : '5.0';
+  const totalReviews = reviews.length;
 
   // Generate calendar cells (simplified for demo)
   const calendarCells = Array.from({ length: 30 }, (_, i) => {
     const random = Math.random();
     let status = '';
     if (random > 0.8) status = 'booked';
-    else if (random > 0.9) status = 'hold';
+    else if (random > 0.6) status = 'hold';
     return status;
   });
 
@@ -207,7 +211,7 @@ export default function OwnerDashboard() {
           )
         }))}
         who={{ 
-          initials: hotel.name.split(' ').map(n => n[0]).join(''), 
+          initials: hotel.name.split(' ').map(n => n[0]).join('').slice(0, 2), 
           name: hotel.name, 
           subtitle: `Owner · ${hotel.status}` 
         }}
@@ -222,7 +226,7 @@ export default function OwnerDashboard() {
             </span>
             <button className="icon-btn">🔔<span className="ping"></span></button>
             <div className="avatar" style={{ width: 34, height: 34, fontSize: '.75rem' }}>
-              {hotel.name.split(' ').map(n => n[0]).join('')}
+              {hotel.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
           </div>
         </div>
@@ -231,16 +235,16 @@ export default function OwnerDashboard() {
           <div className="stat-row">
             <div className="keycard">
               <span className="k-eyebrow">Rooms live</span>
-              <div className="k-value">{hotel.room_count}</div>
+              <div className="k-value">{hotel.room_count || rooms.reduce((s, r) => s + (r.total_units || 0), 0)}</div>
               <span className="k-note">{rooms.length} categories configured</span>
             </div>
             <div className="keycard">
-              <span className="k-eyebrow">Bookings this month</span>
+              <span className="k-eyebrow">Total Bookings</span>
               <div className="k-value">{currentMonthBookings}</div>
               <span className="k-note">{pendingBookings} pending approval</span>
             </div>
             <div className="keycard">
-              <span className="k-eyebrow">Revenue (MTD)</span>
+              <span className="k-eyebrow">Revenue (Approved)</span>
               <div className="k-value">Rs {currentMonthRevenue.toLocaleString()}</div>
               <span className="k-note">Payouts every Friday</span>
             </div>
@@ -257,40 +261,51 @@ export default function OwnerDashboard() {
                 <h3>Booking requests</h3>
                 <span className="tag">{pendingBookings} need a response</span>
               </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table className="data-table">
-                  <thead>
-                    <tr><th>Guest</th><th>Room</th><th>Dates</th><th>Status</th><th>Action</th></tr>
-                  </thead>
-                  <tbody>
-                    {bookings.slice(0, 10).map((booking) => (
-                      <tr key={booking.id}>
-                        <td>
-                          <div className="row-hotel">
-                            <div className="thumb"></div>
-                            <div><b>{booking.guest_name}</b><span>Booking #{booking.id}</span></div>
-                          </div>
-                        </td>
-                        <td>{booking.room_category || 'N/A'}</td>
-                        <td>{new Date(booking.check_in).toLocaleDateString()} - {new Date(booking.check_out).toLocaleDateString()}</td>
-                        <td><StatusBadge status={booking.status} /></td>
-                        <td>
-                          <div className="table-actions">
-                            {booking.status === 'pending' ? (
-                              <>
-                                <button className="approve" onClick={() => setBookingStatus(booking.id, 'approved')}>✓</button>
-                                <button className="reject" onClick={() => setBookingStatus(booking.id, 'rejected')}>✕</button>
-                              </>
-                            ) : (
-                              <button>👁</button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {bookings.length === 0 ? (
+                <div style={{ padding: '36px 20px', textAlign: 'center', color: '#64748b' }}>
+                  <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>📅</div>
+                  <b style={{ color: '#0f172a', display: 'block', marginBottom: '4px' }}>No booking requests yet</b>
+                  <span style={{ fontSize: '.85rem' }}>When a guest reserves a room on the public website, it will appear here for your review.</span>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="data-table">
+                    <thead>
+                      <tr><th>Guest</th><th>Room</th><th>Dates</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                      {bookings.slice(0, 10).map((booking) => (
+                        <tr key={booking.id}>
+                          <td>
+                            <div className="row-hotel">
+                              <div className="thumb"></div>
+                              <div>
+                                <b>{booking.guest_name}</b>
+                                <span>{booking.guest_email || `Booking #${booking.id}`}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td>{booking.room_category || 'Room'}</td>
+                          <td>{booking.check_in} - {booking.check_out}</td>
+                          <td><StatusBadge status={booking.status} /></td>
+                          <td>
+                            <div className="table-actions">
+                              {booking.status === 'pending' ? (
+                                <>
+                                  <button title="Approve" className="approve" onClick={() => setBookingStatus(booking.id, 'approved')}>✓</button>
+                                  <button title="Reject" className="reject" onClick={() => setBookingStatus(booking.id, 'rejected')}>✕</button>
+                                </>
+                              ) : (
+                                <button title="View">👁</button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             <div className="panel">
