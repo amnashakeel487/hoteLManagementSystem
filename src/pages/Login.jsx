@@ -24,12 +24,19 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
       
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Login failed');
+      const resText = await res.text();
+      let data = {};
+      try {
+        data = resText ? JSON.parse(resText) : {};
+      } catch (e) {
+        throw new Error(res.ok ? 'Received invalid response from server' : `Server error (${res.status})`);
       }
       
-      const { access_token, role, user } = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || data.message || `Login failed (${res.status})`);
+      }
+      
+      const { access_token, role, user } = data;
       
       // Use auth context to store credentials
       login(access_token, user);
