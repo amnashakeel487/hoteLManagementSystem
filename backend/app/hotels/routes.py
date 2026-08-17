@@ -60,35 +60,41 @@ def register_hotel():
                 if file_path:
                     file_paths[db_field] = file_path
     
+    # Check if a user with this email already exists and link them
+    existing_user = User.query.filter_by(email=data['email']).first()
+    owner_id = existing_user.id if existing_user else None
+    
     # Create hotel record
-    hotel = Hotel(
-        owner_id=None,  # Will be set by admin or during owner creation
-        name=data['hotelName'],
-        business_name=data['businessName'], 
-        email=data['email'],
-        phone=data['phone'],
-        address=data['address'],
-        city=data['city'],
-        country=data['country'],
-        latitude=latitude,
-        longitude=longitude,
-        description=data.get('description', ''),
-        room_count=room_count,
-        category=data['category'],
-        status='pending',
-        **file_paths
-    )
-    
-    db.session.add(hotel)
-    db.session.commit()
-    
-    # TODO: Send notification email to admins
-    
-    return {
-        'message': 'Hotel registration submitted successfully',
-        'hotel_id': hotel.id,
-        'status': 'pending'
-    }, 201
+    try:
+        hotel = Hotel(
+            owner_id=owner_id,
+            name=data['hotelName'],
+            business_name=data['businessName'], 
+            email=data['email'],
+            phone=data['phone'],
+            address=data['address'],
+            city=data['city'],
+            country=data['country'],
+            latitude=latitude,
+            longitude=longitude,
+            description=data.get('description', ''),
+            room_count=room_count,
+            category=data['category'],
+            status='pending',
+            **file_paths
+        )
+        
+        db.session.add(hotel)
+        db.session.commit()
+        
+        return {
+            'message': 'Hotel registration submitted successfully',
+            'hotel_id': hotel.id,
+            'status': 'pending'
+        }, 201
+    except Exception as e:
+        db.session.rollback()
+        return {'error': f'Registration failed: {str(e)}'}, 500
 
 @hotels_bp.route('/<int:hotel_id>', methods=['GET'])
 @jwt_required()

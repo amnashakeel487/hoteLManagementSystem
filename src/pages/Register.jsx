@@ -62,12 +62,18 @@ export default function Register() {
         body: formData // Don't set Content-Type header, let browser set it for multipart/form-data
       });
       
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Registration failed');
+      const resText = await res.text();
+      let resData = {};
+      try {
+        resData = JSON.parse(resText);
+      } catch (parseErr) {
+        throw new Error(res.ok ? 'Registration submitted.' : `Server error (${res.status}): ${resText.substring(0, 100)}`);
       }
       
-      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || 'Registration failed');
+      }
+      
       navigate('/pending');
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
