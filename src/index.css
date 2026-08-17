@@ -1342,70 +1342,152 @@ table.data-table{ width:100%; border-collapse:collapse; }
   }
 }
 
-/* --- Tablet / Phone Tweaks (<= 768px, 428px, 375px) --- */
+/* --- Tablet / Phone Tweaks (<= 768px) --- */
 @media (max-width: 768px) {
   .container {
     padding: 0 16px;
   }
 
+  /* Section Spacing */
+  section {
+    padding: 56px 0;
+  }
+
+  .section-head {
+    margin-bottom: 36px;
+  }
+
+  .section-head h2 {
+    font-size: 1.6rem;
+  }
+
   /* Hero Section */
   .hero {
-    padding: 32px 0 56px;
+    padding: 36px 0 54px;
   }
 
   .hero h1 {
-    font-size: clamp(1.85rem, 7vw, 2.75rem);
-    margin: 16px 0;
+    font-size: clamp(1.75rem, 6.5vw, 2.5rem);
+    margin: 14px 0;
+    line-height: 1.1;
+  }
+
+  .hero .lede {
+    font-size: 0.96rem;
+    line-height: 1.55;
   }
 
   .hero-meta {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-    gap: 16px;
-    margin-top: 32px;
-    padding-top: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+    margin-top: 28px;
+    padding-top: 18px;
   }
 
   .hero-meta div b {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
   }
 
   .hero-meta div span {
-    font-size: 0.65rem;
+    font-size: 0.64rem;
+  }
+
+  /* Stamp visual */
+  .stamp-stage {
+    height: 300px;
+    margin-top: 12px;
+  }
+
+  .doc-card {
+    width: 260px;
+    padding: 18px 16px;
+  }
+
+  .doc-card .doc-head b {
+    font-size: 0.95rem;
+  }
+
+  .doc-card .doc-head span {
+    font-size: 0.62rem;
   }
 
   /* Flow timeline arrow alignment on stacked mobile */
   .flow-step {
-    padding: 24px 18px 28px;
+    padding: 20px 16px 24px;
+  }
+
+  .flow-step h4 {
+    font-size: 1.0rem;
+    margin: 6px 0;
+  }
+
+  .flow-step p {
+    font-size: 0.82rem;
   }
 
   .flow-step::after {
-    left: 20px;
-    bottom: -13px;
-    width: 24px;
-    height: 24px;
-    font-size: 0.75rem;
+    left: 18px;
+    bottom: -12px;
+    width: 22px;
+    height: 22px;
+    font-size: 0.72rem;
+  }
+
+  /* Pathways & Feature Cards */
+  .pathway-card {
+    padding: 24px 20px;
+  }
+
+  .pathway-card h3 {
+    font-size: 1.25rem;
+    margin: 10px 0 8px;
+  }
+
+  .pathway-card p {
+    font-size: 0.88rem;
+    margin-bottom: 16px;
+  }
+
+  .pathway-card li {
+    font-size: 0.85rem;
+  }
+
+  .feature-card {
+    padding: 20px 18px;
+  }
+
+  .feature-card h4 {
+    font-size: 0.95rem;
+  }
+
+  .feature-card p {
+    font-size: 0.82rem;
   }
 
   /* Auth Shell */
   .auth-aside {
-    padding: 36px 20px;
+    padding: 32px 20px;
   }
 
   .auth-aside .aside-copy {
-    margin-top: 24px;
+    margin-top: 20px;
+  }
+
+  .auth-aside .aside-copy h2 {
+    font-size: 1.5rem;
   }
 
   .auth-main {
-    padding: 32px 16px;
+    padding: 28px 16px;
   }
 
   .form-wrap h1 {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
 
   .stepper {
-    margin: 28px 0 32px;
+    margin: 24px 0 28px;
   }
 
   .step-line {
@@ -1414,52 +1496,161 @@ table.data-table{ width:100%; border-collapse:collapse; }
 
   .form-actions {
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
   }
 
   .form-actions .btn {
     flex: 1;
-    min-width: 130px;
+    min-width: 120px;
   }
 
   /* Data tables & horizontal scroll */
-  .data-table th, .data-table td {
+  .data-table th {
+    padding: 8px 10px;
+    font-size: 0.65rem;
+    white-space: nowrap;
+  }
+
+  .data-table td {
     padding: 12px 10px;
     font-size: 0.82rem;
     white-space: nowrap;
   }
 
+  .row-hotel .thumb {
+    width: 36px;
+    height: 36px;
+  }
+
+  .row-hotel b {
+    font-size: 0.82rem;
+  }
+
+  .row-hotel span {
+    font-size: 0.7rem;
+  }
+
   /* Stat Row */
   .stat-row {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    margin-bottom: 20px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
   }
 
   .keycard {
-    padding: 20px 18px;
+    padding: 18px 16px;
   }
 
   .keycard .k-value {
-    font-size: 1.7rem;
+    font-size: 1.6rem;
+  }
+
+  .keycard .k-eyebrow {
+    font-size: 0.62rem;
+  }
+
+  .keycard .k-note {
+    font-size: 0.72rem;
   }
 
   /* Split grids inside panels */
   .split {
     grid-template-columns: 1fr !important;
-    gap: 20px !important;
+    gap: 18px !important;
   }
 
   .panel {
     padding: 18px 16px;
     border-radius: var(--radius-m);
   }
+
+  .panel-head h3 {
+    font-size: 1.0rem;
+  }
 }
 
+/* --- Mobile Phone Scale-Down (<= 600px) --- */
+@media (max-width: 600px) {
+  body {
+    font-size: 14.5px;
+  }
+
+  .eyebrow {
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    gap: 6px;
+  }
+
+  .eyebrow::before {
+    width: 14px;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    font-size: 0.88rem;
+    min-height: 40px;
+  }
+
+  .btn-sm {
+    padding: 8px 14px;
+    font-size: 0.78rem;
+    min-height: 40px;
+  }
+
+  .stat-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .pathway-card {
+    padding: 20px 16px;
+  }
+
+  .feature-card {
+    padding: 18px 16px;
+  }
+
+  .panel {
+    padding: 16px 14px;
+  }
+
+  .keycard {
+    padding: 16px 14px;
+  }
+
+  .keycard .k-value {
+    font-size: 1.45rem;
+  }
+
+  .quote-strip blockquote {
+    font-size: 1.25rem;
+    line-height: 1.45;
+  }
+
+  .badge-stamp {
+    font-size: 0.62rem;
+    padding: 4px 8px;
+  }
+
+  .promo-pill {
+    padding: 4px 12px 4px 6px;
+    font-size: 0.7rem;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .promo-tag-free {
+    font-size: 0.62rem;
+    padding: 2px 7px;
+  }
+}
+
+/* --- Small/Medium Phone Refinements (<= 428px) --- */
 @media (max-width: 428px) {
   .hero-actions {
     flex-direction: column;
     width: 100%;
+    gap: 8px;
   }
 
   .hero-actions .btn {
@@ -1468,12 +1659,18 @@ table.data-table{ width:100%; border-collapse:collapse; }
   }
 
   .cta-band {
-    padding: 36px 18px;
+    padding: 30px 16px;
+    border-radius: 16px;
+  }
+
+  .cta-band h2 {
+    font-size: 1.4rem;
   }
 
   .cta-band .actions {
     flex-direction: column;
     width: 100%;
+    gap: 8px;
   }
 
   .cta-band .actions .btn {
@@ -1485,37 +1682,74 @@ table.data-table{ width:100%; border-collapse:collapse; }
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     flex-wrap: nowrap;
-    padding: 4px;
+    padding: 3px;
+    gap: 4px;
   }
 
   .tab-btn {
     white-space: nowrap;
     flex-shrink: 0;
+    padding: 7px 12px;
+    font-size: 0.74rem;
+  }
+
+  .app-topbar {
+    height: 58px;
+    padding: 0 12px 0 60px;
+  }
+
+  .app-topbar h1 {
+    font-size: 1.05rem;
+  }
+
+  .mobile-sidebar-toggle {
+    top: 10px;
+    left: 10px;
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+  }
+
+  .foot-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
 }
 
+/* --- Small Phone (375px iPhone SE) --- */
 @media (max-width: 375px) {
   .container {
     padding: 0 12px;
   }
 
   .brand {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
+  }
+
+  .brand .mark {
+    width: 28px;
+    height: 28px;
   }
 
   .hero h1 {
-    font-size: 1.75rem;
+    font-size: 1.65rem;
   }
 
   .doc-card {
-    width: 250px;
-    padding: 18px 16px;
+    width: 230px;
+    padding: 14px 12px;
   }
 
   .step-dot {
-    width: 28px;
-    height: 28px;
-    font-size: 0.7rem;
+    width: 26px;
+    height: 26px;
+    font-size: 0.68rem;
+  }
+
+  .btn {
+    padding: 9px 16px;
+    font-size: 0.84rem;
   }
 }
+
 
