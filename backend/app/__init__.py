@@ -58,4 +58,14 @@ def create_app(config_name=None):
     app.register_blueprint(reviews_bp, url_prefix='/api/reviews')
     app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
     
+    @app.route('/')
+    @app.route('/health')
+    def health_check():
+        return {
+            'status': 'healthy',
+            'message': 'Stayfolio Hotel Management API is running',
+            'environment': config_name,
+            'version': '1.0.0'
+        }
+    
     return app
