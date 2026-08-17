@@ -80,4 +80,11 @@ def create_app(config_name=None):
             'version': '1.0.0'
         }
     
+    from flask import send_from_directory
+    @app.route('/uploads/<path:filename>')
+    def serve_uploaded_file(filename):
+        """Serve uploaded files (licenses, IDs, images)"""
+        upload_folder = os.path.abspath(app.config['UPLOAD_FOLDER'])
+        return send_from_directory(upload_folder, filename)
+    
     return app

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import Sidebar from '../components/Sidebar';
+import { API_BASE_URL } from '../config';
 
 const TABS = ['pending', 'approved', 'rejected', 'suspended'];
 
@@ -33,6 +34,7 @@ export default function AdminDashboard() {
     suspended: []
   });
   const [reviewing, setReviewing] = useState(null);
+  const [showDocsModal, setShowDocsModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -291,7 +293,14 @@ export default function AdminDashboard() {
                   </div>
                 )}
                 <div className="form-actions">
-                  <a href="#" className="text-muted" style={{ fontSize: '.85rem', fontWeight: 600 }}>View documents</a>
+                  <button 
+                    type="button" 
+                    className="btn btn-ghost btn-sm" 
+                    style={{ fontSize: '.85rem', fontWeight: 600 }}
+                    onClick={() => setShowDocsModal(true)}
+                  >
+                    📄 View uploaded documents
+                  </button>
                   {reviewing.status === 'pending' && (
                     <div className="flex gap-12">
                       <button 
@@ -341,6 +350,155 @@ export default function AdminDashboard() {
           </div>
         </div>
       </main>
+
+      {/* Documents Modal */}
+      {showDocsModal && reviewing && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '24px'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            maxWidth: '750px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            padding: '32px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.4rem' }}>{reviewing.name} — Documents</h3>
+                <span className="text-muted" style={{ fontSize: '.85rem' }}>Uploaded during registration</span>
+              </div>
+              <button 
+                type="button" 
+                className="btn btn-ghost btn-sm" 
+                onClick={() => setShowDocsModal(false)}
+                style={{ fontSize: '1.2rem', padding: '4px 12px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              {/* Business License */}
+              <DocumentCard 
+                title="Business License" 
+                filePath={reviewing.license_path} 
+                icon="📜"
+              />
+
+              {/* Identity Document */}
+              <DocumentCard 
+                title="CNIC / Identity Document" 
+                filePath={reviewing.id_doc_path} 
+                icon="🪪"
+              />
+
+              {/* Logo */}
+              <DocumentCard 
+                title="Hotel Logo" 
+                filePath={reviewing.logo_path} 
+                icon="🏷️"
+                isImage={true}
+              />
+
+              {/* Cover Image */}
+              <DocumentCard 
+                title="Cover Image" 
+                filePath={reviewing.cover_path} 
+                icon="🖼️"
+                isImage={true}
+              />
+            </div>
+
+            <div style={{ marginTop: '28px', textAlign: 'right' }}>
+              <button className="btn btn-primary" onClick={() => setShowDocsModal(false)}>
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DocumentCard({ title, filePath, icon, isImage = false }) {
+  if (!filePath) {
+    return (
+      <div style={{
+        border: '1px dashed var(--hairline)',
+        borderRadius: '8px',
+        padding: '20px',
+        textAlign: 'center',
+        background: 'rgba(0,0,0,0.01)'
+      }}>
+        <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{icon}</div>
+        <b style={{ display: 'block', fontSize: '.9rem' }}>{title}</b>
+        <span className="text-muted" style={{ fontSize: '.8rem' }}>Not provided (Optional)</span>
+      </div>
+    );
+  }
+
+  const fileUrl = filePath.startsWith('http') ? filePath : `${API_BASE_URL}/uploads/${filePath.replace(/^\/+/, '')}`;
+  const isImgFile = isImage || /\.(jpg|jpeg|png|webp|gif)$/i.test(filePath);
+
+  return (
+    <div style={{
+      border: '1px solid var(--hairline)',
+      borderRadius: '8px',
+      padding: '16px',
+      background: '#fff',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between'
+    }}>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <span style={{ fontSize: '1.2rem' }}>{icon}</span>
+          <b style={{ fontSize: '.92rem' }}>{title}</b>
+        </div>
+
+        {isImgFile ? (
+          <div style={{ height: '140px', background: '#f8fafc', borderRadius: '6px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+            <img 
+              src={fileUrl} 
+              alt={title} 
+              style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          </div>
+        ) : (
+          <div style={{ height: '80px', background: '#f8fafc', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px', fontSize: '.85rem', color: '#64748b' }}>
+            Document available (PDF / File)
+          </div>
+        )}
+      </div>
+
+      <a 
+        href={fileUrl} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="btn btn-ghost btn-sm"
+        style={{ width: '100%', textAlign: 'center', display: 'block' }}
+      >
+        Open Full File ↗
+      </a>
     </div>
   );
 }
