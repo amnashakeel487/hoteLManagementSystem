@@ -44,6 +44,7 @@ export default function Landing() {
         <div className="container hero-grid">
           <div>
             <div className="promo-pill mb-16">
+              <span className="promo-tag-free">FREE</span>
               <span className="promo-sparkle">✦</span>
               <span>Complimentary Professional Cleaning on Every Approved Stay</span>
             </div>

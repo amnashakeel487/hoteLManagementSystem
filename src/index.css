@@ -1097,23 +1097,37 @@ table.data-table{ width:100%; border-collapse:collapse; }
 .promo-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(31, 111, 92, 0.16);
-  border: 1px solid rgba(31, 111, 92, 0.35);
-  color: #5be0be;
-  padding: 6px 14px;
+  gap: 10px;
+  background: rgba(31, 111, 92, 0.22);
+  border: 1px solid rgba(31, 111, 92, 0.45);
+  color: #72f0cb;
+  padding: 5px 16px 5px 6px;
   border-radius: 100px;
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   backdrop-filter: blur(8px);
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.promo-tag-free {
+  background: linear-gradient(135deg, var(--brass), #f3d498);
+  color: #0a1128;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 0.68rem;
+  padding: 3px 10px;
+  border-radius: 100px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(176, 141, 87, 0.45);
 }
 
 .promo-pill .promo-sparkle {
   color: var(--brass);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .hotel-free-cleaning-badge {
