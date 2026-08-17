@@ -222,6 +222,7 @@ def book_hotel_room(hotel_id):
         room_id=room.id,
         guest_name=guest_name,
         guest_email=guest_email,
+        guest_phone=guest_phone or None,
         check_in=check_in,
         check_out=check_out,
         total_amount=total_amount,
@@ -239,6 +240,36 @@ def book_hotel_room(hotel_id):
         'nights': nights,
         'total_amount': total_amount
     }, 201
+
+@hotels_bp.route('/public/guest-bookings', methods=['GET'])
+def get_guest_bookings():
+    """Public endpoint: look up all bookings by a guest's email"""
+    email = request.args.get('email', '').strip().lower()
+    booking_ref = request.args.get('ref', '').strip().upper()
+
+    if not email:
+        return {'error': 'Email is required'}, 400
+
+    from app.models import Booking
+    query = Booking.query.filter(
+        Booking.guest_email.ilike(email)
+    )
+
+    # Optionally filter by reference number
+    if booking_ref and booking_ref.startswith('STAY-'):
+        try:
+            booking_id = int(booking_ref.replace('STAY-', ''))
+            query = query.filter_by(id=booking_id)
+        except ValueError:
+            pass
+
+    bookings = query.order_by(Booking.created_at.desc()).all()
+
+    return {
+        'bookings': [b.to_dict() for b in bookings],
+        'total': len(bookings)
+    }
+
 
 @hotels_bp.route('/<int:hotel_id>', methods=['GET'])
 @jwt_required()

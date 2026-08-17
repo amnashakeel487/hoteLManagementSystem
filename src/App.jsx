@@ -24,6 +24,7 @@ import OwnerSettings from './pages/owner/OwnerSettings';
 import ExploreHotels from './pages/public/ExploreHotels';
 import HotelDetail from './pages/public/HotelDetail';
 import BookingConfirmation from './pages/public/BookingConfirmation';
+import MyBookings from './pages/public/MyBookings';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -36,6 +37,7 @@ function AnimatedRoutes() {
         <Route path="/hotels" element={<ExploreHotels />} />
         <Route path="/hotel/:id" element={<HotelDetail />} />
         <Route path="/booking-confirmed/:id" element={<BookingConfirmation />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/pending" element={<Pending />} />

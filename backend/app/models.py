@@ -168,6 +168,7 @@ class Booking(db.Model):
     hotel_id = db.Column(db.Integer, db.ForeignKey('hotel.id'), nullable=False)
     guest_name = db.Column(db.String(200), nullable=False)
     guest_email = db.Column(db.String(120), nullable=False)
+    guest_phone = db.Column(db.String(30))
     check_in = db.Column(db.Date, nullable=False)
     check_out = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(20), nullable=False, default='pending')  # pending, approved, rejected
@@ -178,14 +179,27 @@ class Booking(db.Model):
     cleaning_requests = db.relationship('CleaningRequest', backref='booking', lazy='dynamic')
     
     def to_dict(self):
+        nights = (self.check_out - self.check_in).days if self.check_in and self.check_out else 1
+        hotel = Hotel.query.get(self.hotel_id)
+        room = Room.query.get(self.room_id)
         return {
             'id': self.id,
+            'reference': f'STAY-{self.id:04d}',
             'room_id': self.room_id,
             'hotel_id': self.hotel_id,
+            'hotel_name': hotel.name if hotel else None,
+            'hotel_city': hotel.city if hotel else None,
+            'hotel_country': hotel.country if hotel else None,
+            'hotel_phone': hotel.phone if hotel else None,
+            'hotel_email': hotel.email if hotel else None,
+            'room_category': room.category if room else None,
+            'room_price': float(room.price) if room and room.price else None,
             'guest_name': self.guest_name,
             'guest_email': self.guest_email,
+            'guest_phone': self.guest_phone,
             'check_in': self.check_in.isoformat(),
             'check_out': self.check_out.isoformat(),
+            'nights': nights,
             'status': self.status,
             'total_amount': float(self.total_amount) if self.total_amount else None,
             'created_at': self.created_at.isoformat()

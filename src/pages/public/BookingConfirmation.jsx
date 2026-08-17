@@ -83,12 +83,12 @@ export default function BookingConfirmation() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-            <Link to="/explore" className="btn btn-primary">
-              Explore More Stays
+          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to="/my-bookings" className="btn btn-primary">
+              📋 Track My Booking
             </Link>
-            <Link to="/" className="btn btn-ghost">
-              Back to Home
+            <Link to="/explore" className="btn btn-ghost">
+              Explore More Stays
             </Link>
           </div>
         </div>

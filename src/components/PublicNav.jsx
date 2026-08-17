@@ -63,6 +63,15 @@ export default function PublicNav() {
           }}>
             Explore Stays
           </Link>
+          <Link to="/my-bookings" style={{
+            color: '#94a3b8',
+            textDecoration: 'none',
+            fontSize: '.92rem',
+            fontWeight: 500,
+            transition: 'color 0.2s'
+          }}>
+            My Bookings
+          </Link>
           <Link to="/" style={{
             color: '#94a3b8',
             textDecoration: 'none',
