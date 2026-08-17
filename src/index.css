@@ -1086,6 +1086,422 @@ table.data-table{ width:100%; border-collapse:collapse; }
 
 /* utility */
 .mt-8{ margin-top:8px; } .mt-16{ margin-top:16px; } .mt-24{ margin-top:24px; } .mt-32{ margin-top:32px; }
+.mb-8{ margin-bottom:8px; } .mb-16{ margin-bottom:16px; } .mb-24{ margin-bottom:24px; }
 .flex{ display:flex; } .items-center{ align-items:center; } .justify-between{ justify-content:space-between; } .gap-8{ gap:8px; } .gap-12{ gap:12px; }
 .text-muted{ color:var(--muted); }
 .hidden{ display:none !important; }
+
+/* ============================================================
+   PROMOTIONAL BADGES ("FREE CLEANING SERVICE")
+   ============================================================ */
+.promo-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(31, 111, 92, 0.16);
+  border: 1px solid rgba(31, 111, 92, 0.35);
+  color: #5be0be;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(8px);
+  margin-bottom: 16px;
+}
+
+.promo-pill .promo-sparkle {
+  color: var(--brass);
+  font-size: 0.85rem;
+}
+
+.hotel-free-cleaning-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(31, 111, 92, 0.9);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   RESPONSIVE & MOBILE OPTIMIZATIONS (375px, 428px, 768px, 1024px)
+   ============================================================ */
+
+/* --- Mobile Sidebar Drawer & Backdrop --- */
+.mobile-sidebar-toggle {
+  display: none;
+}
+
+.sidebar-close-btn {
+  display: none;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .mobile-sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--brass);
+    border: 2px solid var(--brass);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 1001;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .mobile-sidebar-toggle:hover {
+    transform: scale(1.05);
+  }
+
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    height: 100vh;
+    z-index: 1002;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+  }
+
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close-btn {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--hairline-lt);
+    background: rgba(251, 246, 236, 0.08);
+    color: var(--parchment);
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 17, 40, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .sidebar-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .app-topbar {
+    padding: 0 16px;
+    height: 66px;
+  }
+
+  .app-topbar h1 {
+    font-size: 1.15rem;
+  }
+
+  .app-body {
+    padding: 20px 16px 80px;
+  }
+}
+
+/* --- Touch Targets on Mobile (min 40x40px) --- */
+@media (max-width: 768px) {
+  .table-actions button {
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 0.95rem;
+  }
+
+  .icon-btn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .tab-btn {
+    padding: 10px 16px;
+    min-height: 40px;
+  }
+
+  .btn {
+    min-height: 44px;
+  }
+}
+
+/* --- Public Site Responsive Rules (Explore & Hotel Details) --- */
+@media (max-width: 768px) {
+  .public-search-bar {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 16px !important;
+  }
+
+  .public-search-bar .search-col {
+    border-left: none !important;
+    border-top: 1px solid #e2e8f0;
+    padding: 8px 0 0 !important;
+  }
+
+  .public-search-bar .search-col-main {
+    border-top: none !important;
+    padding-top: 0 !important;
+  }
+
+  .search-submit-btn {
+    width: 100% !important;
+    height: 46px !important;
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 900px) {
+  .detail-main-grid {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+
+  .detail-sticky-card {
+    position: static !important;
+    margin-top: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .public-hotel-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .detail-room-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+
+  .detail-room-card .room-price-col {
+    border-left: none !important;
+    border-top: 1px solid #f1f5f9;
+    padding-left: 0 !important;
+    padding-top: 16px !important;
+    text-align: left !important;
+  }
+
+  .detail-room-card .room-price-col button {
+    margin-top: 8px;
+  }
+}
+
+/* --- Tablet / Phone Tweaks (<= 768px, 428px, 375px) --- */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  /* Hero Section */
+  .hero {
+    padding: 50px 0 70px;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.85rem, 7vw, 2.75rem);
+    margin: 16px 0;
+  }
+
+  .hero-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 16px;
+    margin-top: 32px;
+    padding-top: 20px;
+  }
+
+  .hero-meta div b {
+    font-size: 1.35rem;
+  }
+
+  .hero-meta div span {
+    font-size: 0.65rem;
+  }
+
+  /* Flow timeline arrow alignment on stacked mobile */
+  .flow-step {
+    padding: 24px 18px 28px;
+  }
+
+  .flow-step::after {
+    left: 20px;
+    bottom: -13px;
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+
+  /* Auth Shell */
+  .auth-aside {
+    padding: 36px 20px;
+  }
+
+  .auth-aside .aside-copy {
+    margin-top: 24px;
+  }
+
+  .auth-main {
+    padding: 32px 16px;
+  }
+
+  .form-wrap h1 {
+    font-size: 1.6rem;
+  }
+
+  .stepper {
+    margin: 28px 0 32px;
+  }
+
+  .step-line {
+    margin: 0 6px;
+  }
+
+  .form-actions {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .form-actions .btn {
+    flex: 1;
+    min-width: 130px;
+  }
+
+  /* Data tables & horizontal scroll */
+  .data-table th, .data-table td {
+    padding: 12px 10px;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  /* Stat Row */
+  .stat-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .keycard {
+    padding: 20px 18px;
+  }
+
+  .keycard .k-value {
+    font-size: 1.7rem;
+  }
+
+  /* Split grids inside panels */
+  .split {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+
+  .panel {
+    padding: 18px 16px;
+    border-radius: var(--radius-m);
+  }
+}
+
+@media (max-width: 428px) {
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .cta-band {
+    padding: 36px 18px;
+  }
+
+  .cta-band .actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .cta-band .actions .btn {
+    width: 100%;
+  }
+
+  .tab-row {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding: 4px;
+  }
+
+  .tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 375px) {
+  .container {
+    padding: 0 12px;
+  }
+
+  .brand {
+    font-size: 1.15rem;
+  }
+
+  .hero h1 {
+    font-size: 1.75rem;
+  }
+
+  .doc-card {
+    width: 250px;
+    padding: 18px 16px;
+  }
+
+  .step-dot {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
+}
+

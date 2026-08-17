@@ -199,7 +199,7 @@ export default function HotelDetail() {
 
       {/* Main Detail & Rooms Area */}
       <main className="container" style={{ padding: '40px 20px 80px', flex: 1 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '40px', alignItems: 'flex-start' }}>
+        <div className="detail-main-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '40px', alignItems: 'flex-start' }}>
           {/* Left Column: About & Room Showcase */}
           <div>
             <section style={{ background: '#ffffff', borderRadius: '12px', padding: '32px', border: '1px solid #e2e8f0', marginBottom: '32px' }}>
@@ -244,6 +244,7 @@ export default function HotelDetail() {
                   {hotel.rooms.map(room => (
                     <div 
                       key={room.id}
+                      className="detail-room-card"
                       style={{
                         background: '#ffffff',
                         borderRadius: '12px',
@@ -276,7 +277,7 @@ export default function HotelDetail() {
                         </div>
                       </div>
 
-                      <div style={{ textAlign: 'right', borderLeft: '1px solid #f1f5f9', paddingLeft: '24px', minWidth: '170px' }}>
+                      <div className="room-price-col" style={{ textAlign: 'right', borderLeft: '1px solid #f1f5f9', paddingLeft: '24px', minWidth: '170px' }}>
                         <div style={{ fontSize: '1.35rem', fontWeight: 700, color: '#0f172a', fontFamily: 'var(--font-mono, monospace)' }}>
                           PKR {Number(room.price).toLocaleString()}
                         </div>
@@ -332,9 +333,13 @@ export default function HotelDetail() {
 
           {/* Right Column: Hotel Contact Card */}
           <div>
-            <div style={{ background: '#ffffff', borderRadius: '12px', padding: '28px', border: '1px solid #e2e8f0', position: 'sticky', top: '24px' }}>
-              <h3 style={{ margin: '0 0 16px', fontSize: '1.15rem', color: '#0f172a' }}>Stay Guarantee</h3>
+            <div className="detail-sticky-card" style={{ background: '#ffffff', borderRadius: '12px', padding: '28px', border: '1px solid #e2e8f0', position: 'sticky', top: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a' }}>Stay Guarantee</h3>
+                <span className="hotel-free-cleaning-badge">✦ Certified</span>
+              </div>
               <ul style={{ paddingLeft: '20px', color: '#475569', fontSize: '.88rem', lineHeight: 1.8, margin: '0 0 20px' }}>
+                <li><strong style={{ color: 'var(--emerald, #1F6F5C)' }}>✦ Complimentary professional cleaning</strong> on every stay</li>
                 <li>Direct communication with property owner</li>
                 <li>Instant reservation confirmation</li>
                 <li>Clean, certified accommodations</li>

@@ -43,6 +43,10 @@ export default function Landing() {
       <header className="hero">
         <div className="container hero-grid">
           <div>
+            <div className="promo-pill mb-16">
+              <span className="promo-sparkle">✦</span>
+              <span>Complimentary Professional Cleaning on Every Approved Stay</span>
+            </div>
             <span className="eyebrow">Owner Onboarding &amp; Approval</span>
             <h1>Every stay starts with a <em>stamp of approval.</em></h1>
             <p className="lede">

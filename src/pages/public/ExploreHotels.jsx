@@ -77,7 +77,7 @@ export default function ExploreHotels() {
           </p>
 
           {/* Search Bar Container */}
-          <div style={{
+          <div className="public-search-bar" style={{
             background: '#ffffff',
             borderRadius: '12px',
             padding: '12px',
@@ -88,7 +88,7 @@ export default function ExploreHotels() {
             alignItems: 'center',
             textAlign: 'left'
           }}>
-            <div style={{ padding: '0 8px' }}>
+            <div className="search-col search-col-main" style={{ padding: '0 8px' }}>
               <span style={{ fontSize: '.72rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Destination / Hotel</span>
               <input 
                 type="text" 
@@ -99,7 +99,7 @@ export default function ExploreHotels() {
               />
             </div>
 
-            <div style={{ borderLeft: '1px solid #e2e8f0', padding: '0 12px' }}>
+            <div className="search-col" style={{ borderLeft: '1px solid #e2e8f0', padding: '0 12px' }}>
               <span style={{ fontSize: '.72rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 600, display: 'block', marginBottom: '4px' }}>City</span>
               <select 
                 value={selectedCity}
@@ -110,7 +110,7 @@ export default function ExploreHotels() {
               </select>
             </div>
 
-            <div style={{ borderLeft: '1px solid #e2e8f0', padding: '0 12px' }}>
+            <div className="search-col" style={{ borderLeft: '1px solid #e2e8f0', padding: '0 12px' }}>
               <span style={{ fontSize: '.72rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Category</span>
               <select 
                 value={selectedCategory}
@@ -123,7 +123,7 @@ export default function ExploreHotels() {
 
             <button 
               onClick={fetchHotels}
-              className="btn btn-primary"
+              className="btn btn-primary search-submit-btn"
               style={{ padding: '14px 28px', height: '100%', borderRadius: '8px', fontWeight: 600 }}
             >
               Search
@@ -197,7 +197,7 @@ export default function ExploreHotels() {
             </button>
           </div>
         ) : (
-          <div style={{
+          <div className="public-hotel-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
             gap: '28px'
@@ -252,22 +252,35 @@ function HotelCard({ hotel }) {
             </div>
           )}
 
-          {/* Category Tag */}
-          <span style={{
+          {/* Tags Top Left */}
+          <div style={{
             position: 'absolute',
             top: '12px',
             left: '12px',
-            background: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(4px)',
-            color: '#fff',
-            fontSize: '.75rem',
-            fontWeight: 600,
-            padding: '4px 10px',
-            borderRadius: '4px',
-            border: '1px solid rgba(255,255,255,0.1)'
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap',
+            zIndex: 2
           }}>
-            {hotel.category || 'Hotel'}
-          </span>
+            {/* Category Tag */}
+            <span style={{
+              background: 'rgba(15, 23, 42, 0.88)',
+              backdropFilter: 'blur(4px)',
+              color: '#fff',
+              fontSize: '.74rem',
+              fontWeight: 600,
+              padding: '4px 10px',
+              borderRadius: '4px',
+              border: '1px solid rgba(255,255,255,0.12)'
+            }}>
+              {hotel.category || 'Hotel'}
+            </span>
+
+            {/* Free Cleaning Service Promo Badge */}
+            <span className="hotel-free-cleaning-badge">
+              ✦ Free Cleaning
+            </span>
+          </div>
 
           {/* Rating Tag */}
           <span style={{
@@ -283,7 +296,8 @@ function HotelCard({ hotel }) {
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+            zIndex: 2
           }}>
             ★ {hotel.rating || 4.8} <span style={{ fontWeight: 400, color: '#64748b', fontSize: '.72rem' }}>({hotel.review_count || 0})</span>
           </span>
