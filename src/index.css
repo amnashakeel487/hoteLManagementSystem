@@ -769,7 +769,7 @@ section{ padding:112px 0; }
   background:var(--ink);
   color:var(--parchment);
   padding:56px;
-  display:flex; flex-direction:column; justify-content:space-between;
+  display:flex; flex-direction:column; justify-content:flex-start; gap:32px;
   position:relative;
   overflow:hidden;
 }
@@ -780,16 +780,23 @@ section{ padding:112px 0; }
 }
 .auth-aside .brand {
   color: var(--parchment);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
-.auth-aside .aside-copy{ position:relative; margin-top:32px; max-width:380px; }
-.auth-aside .aside-copy h2{ color:var(--parchment); font-size:2rem; font-weight:500; line-height:1.2; margin-bottom:16px; }
+.auth-aside .aside-copy{ position:relative; margin-top:0; max-width:380px; }
+.auth-aside .aside-copy h2{ color:var(--parchment); font-size:2rem; font-weight:500; line-height:1.2; margin-bottom:16px; margin-top:8px; }
 .auth-aside .aside-copy p{ color:rgba(251,246,236,.65); }
-.auth-checklist{ margin-top:40px; display:flex; flex-direction:column; gap:16px; position:relative; }
+.auth-checklist{ margin-top:28px; display:flex; flex-direction:column; gap:16px; position:relative; }
 .auth-checklist li{ display:flex; gap:12px; align-items:flex-start; font-size:.9rem; color:rgba(251,246,236,.85); }
 .auth-checklist .tick{
   flex:none; width:22px; height:22px; border-radius:50%;
   background:rgba(176,141,87,.18); color:var(--brass);
   display:grid; place-items:center; font-size:.7rem; margin-top:1px;
+}
+.auth-aside > span:last-child {
+  margin-top: auto;
+  padding-top: 24px;
 }
 .auth-main{
   padding:56px 64px;
