@@ -30,6 +30,7 @@ export default function BookingsCalendar() {
   const [loading, setLoading] = useState(true); // always verify status fresh
   const [filter, setFilter] = useState('all');
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
+  const [updatingBookingId, setUpdatingBookingId] = useState(null);
 
   useEffect(() => {
     loadBookingsData();
@@ -52,8 +53,12 @@ export default function BookingsCalendar() {
   };
 
   const setBookingStatus = async (bookingId, status) => {
+    if (!hotel?.id) {
+      alert('Hotel data is still loading. Please wait a moment and try again.');
+      return;
+    }
+    setUpdatingBookingId(bookingId);
     try {
-      if (!hotel?.id) return;
       const res = await apiCall(`/api/hotels/${hotel.id}/bookings/${bookingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -63,11 +68,14 @@ export default function BookingsCalendar() {
       if (res.ok) {
         setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b));
       } else {
-        const d = await res.json();
-        alert('Failed: ' + (d.error || 'Unknown error'));
+        const d = await res.json().catch(() => ({}));
+        alert('Failed to update booking: ' + (d.error || `Server error ${res.status}`));
       }
     } catch (err) {
       console.error('Error updating booking status:', err);
+      alert('Network error. Please check your connection and try again.');
+    } finally {
+      setUpdatingBookingId(null);
     }
   };
 
@@ -232,11 +240,29 @@ export default function BookingsCalendar() {
                             <div className="table-actions">
                               {booking.status === 'pending' ? (
                                 <>
-                                  <button title="Approve" className="approve" onClick={() => setBookingStatus(booking.id, 'approved')}>✓</button>
-                                  <button title="Reject" className="reject" onClick={() => setBookingStatus(booking.id, 'rejected')}>✕</button>
+                                  <button
+                                    title="Approve"
+                                    className="approve"
+                                    disabled={updatingBookingId === booking.id}
+                                    onClick={() => setBookingStatus(booking.id, 'approved')}
+                                    style={{ opacity: updatingBookingId === booking.id ? 0.5 : 1, cursor: updatingBookingId === booking.id ? 'not-allowed' : 'pointer' }}
+                                  >
+                                    {updatingBookingId === booking.id ? '…' : '✓'}
+                                  </button>
+                                  <button
+                                    title="Reject"
+                                    className="reject"
+                                    disabled={updatingBookingId === booking.id}
+                                    onClick={() => setBookingStatus(booking.id, 'rejected')}
+                                    style={{ opacity: updatingBookingId === booking.id ? 0.5 : 1, cursor: updatingBookingId === booking.id ? 'not-allowed' : 'pointer' }}
+                                  >
+                                    {updatingBookingId === booking.id ? '…' : '✕'}
+                                  </button>
                                 </>
                               ) : (
-                                <button title="View">👁</button>
+                                <span style={{ fontSize: '.75rem', color: booking.status === 'approved' ? 'var(--forest)' : 'var(--rust)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                                  {booking.status}
+                                </span>
                               )}
                             </div>
                           </td>

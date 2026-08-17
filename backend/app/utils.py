@@ -91,12 +91,12 @@ def hotel_owner_required(f):
         if not user:
             return {'error': 'User not found'}, 404
         
-        # Get hotel_id from URL parameters or request data
-        hotel_id = kwargs.get('hotel_id') or request.view_args.get('hotel_id')
+        # Get and remove hotel_id from URL parameters / kwargs so it's not passed as duplicate unexpected arg
+        hotel_id = kwargs.pop('hotel_id', None) or (request.view_args and request.view_args.get('hotel_id'))
         if not hotel_id:
             return {'error': 'Hotel ID required'}, 400
         
-        hotel = Hotel.query.get(hotel_id)
+        hotel = Hotel.query.get(int(hotel_id))
         if not hotel:
             return {'error': 'Hotel not found'}, 404
         
