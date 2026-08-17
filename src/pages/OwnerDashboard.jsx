@@ -23,6 +23,9 @@ const sidebarItems = [
   },
 ];
 
+const BLANK_ROOM = { category: '', price: '', total_units: 1, amenities: [], description: '', max_occupancy: 2, size_sqm: 25 };
+const AMENITIES = ['Wi-Fi','AC','Minibar','City View','Ocean View','Balcony','Work Desk','Safe','TV','Coffee Machine'];
+
 export default function OwnerDashboard() {
   const { user, apiCall, logout } = useAuth();
   const [hotel, setHotel] = useState(null);
@@ -32,38 +35,29 @@ export default function OwnerDashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showAddRoom, setShowAddRoom] = useState(false);
+  const [newRoom, setNewRoom] = useState(BLANK_ROOM);
+  const [savingRoom, setSavingRoom] = useState(false);
+  const [roomError, setRoomError] = useState('');
 
-  useEffect(() => {
-    // Use sample data for now instead of API calls
-    setLoading(false);
-    setHotel({
-      id: 1,
-      name: 'The Marlow Hotel',
-      status: 'approved',
-      room_count: 24
-    });
-    setBookings([
-      { id: 1, guest_name: 'Hana Kobayashi', room_category: 'Deluxe King', check_in: '2026-08-20', check_out: '2026-08-23', status: 'pending' },
-      { id: 2, guest_name: 'Marco Rossi', room_category: 'Twin Standard', check_in: '2026-08-22', check_out: '2026-08-24', status: 'pending' }
-    ]);
-    setReviews([
-      { id: 1, guest_name: 'Hana Kobayashi', rating: 5, comment: 'Amazing stay! Perfect location.' },
-      { id: 2, guest_name: 'Marco Rossi', rating: 4, comment: 'Great service, excellent breakfast.' }
-    ]);
-    setRooms([
-      { id: 1, category: 'Deluxe King', price: 14200, total_units: 8, amenities: ['Wi-Fi', 'AC', 'Minibar'] },
-      { id: 2, category: 'Twin Standard', price: 9600, total_units: 10, amenities: ['Wi-Fi', 'AC'] },
-      { id: 3, category: 'Suite Ocean View', price: 26800, total_units: 6, amenities: ['Wi-Fi', 'AC', 'Balcony', 'Minibar'] }
-    ]);
-    setAnalytics({
-      current_month: { bookings: 118, revenue: 1840000 },
-      rating: { average: 4.7, total_reviews: 212 },
-      monthly_revenue: [
-        { month: 4, revenue: 520000 }, { month: 5, revenue: 640000 }, { month: 6, revenue: 480000 },
-        { month: 7, revenue: 780000 }, { month: 8, revenue: 700000 }
-      ]
-    });
-  }, []);
+  useEffect(() => { loadDashboard(); }, []);
+
+  const loadDashboard = async () => {
+    try {
+      setLoading(true);
+      const res = await apiCall('/api/hotels/owner/my-hotel');
+      if (res.ok) {
+        const data = await res.json();
+        setHotel(data.hotel);
+        setRooms(data.hotel.rooms || []);
+      }
+      // bookings, reviews, analytics can be added later
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -342,7 +336,7 @@ export default function OwnerDashboard() {
           <div className="panel mt-32">
             <div className="panel-head">
               <h3>Room categories</h3>
-              <a href="#" className="btn btn-brass btn-sm">+ Add room category</a>
+              <button className="btn btn-brass btn-sm" onClick={() => { setShowAddRoom(true); setRoomError(''); }}>+ Add room category</button>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table className="data-table">
@@ -367,19 +361,89 @@ export default function OwnerDashboard() {
             </div>
           </div>
 
-          {currentMonthBookings >= 10 && (
-            <div className="panel mt-32 flex justify-between items-center" style={{ flexWrap: 'wrap', gap: 20 }}>
-              <div>
-                <h3>Free cleaning service</h3>
-                <p className="text-muted mt-8" style={{ fontSize: '.88rem' }}>
-                  You're eligible based on {currentMonthBookings} bookings this month. Request a team for your next turnover.
-                </p>
-              </div>
-              <a href="#" className="btn btn-primary">Request cleaning</a>
-            </div>
-          )}
         </div>
       </main>
+
+      {/* Add Room Modal */}
+      {showAddRoom && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '660px', maxHeight: '90vh', overflow: 'auto', padding: '32px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700 }}>Add New Room Category</h2>
+              <button onClick={() => setShowAddRoom(false)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#64748b' }}>×</button>
+            </div>
+            {roomError && <div style={{ background: '#fff1f2', color: '#dc2626', border: '1px solid #fca5a5', padding: '10px 14px', borderRadius: '8px', marginBottom: '16px', fontSize: '.88rem' }}>⚠️ {roomError}</div>}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              <div>
+                <div className="form-group">
+                  <label>Room Category Name *</label>
+                  <input type="text" className="input" placeholder="e.g. Deluxe King" value={newRoom.category} onChange={e => setNewRoom({ ...newRoom, category: e.target.value })} />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Price / night (Rs) *</label>
+                    <input type="number" className="input" value={newRoom.price} onChange={e => setNewRoom({ ...newRoom, price: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label>Units</label>
+                    <input type="number" className="input" min="1" value={newRoom.total_units} onChange={e => setNewRoom({ ...newRoom, total_units: e.target.value })} />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Max Occupancy</label>
+                    <input type="number" className="input" min="1" value={newRoom.max_occupancy} onChange={e => setNewRoom({ ...newRoom, max_occupancy: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label>Size (sqm)</label>
+                    <input type="number" className="input" min="1" value={newRoom.size_sqm} onChange={e => setNewRoom({ ...newRoom, size_sqm: e.target.value })} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Description</label>
+                  <textarea className="input" rows={3} placeholder="Describe this room..." value={newRoom.description} onChange={e => setNewRoom({ ...newRoom, description: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <div className="form-group">
+                  <label>Amenities</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '8px' }}>
+                    {AMENITIES.map(a => (
+                      <label key={a} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '.85rem', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={newRoom.amenities.includes(a)}
+                          onChange={() => setNewRoom(prev => ({ ...prev, amenities: prev.amenities.includes(a) ? prev.amenities.filter(x => x !== a) : [...prev.amenities, a] }))} />
+                        {a}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px', borderTop: '1px solid #f1f5f9', paddingTop: '20px' }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowAddRoom(false)}>Cancel</button>
+              <button className="btn btn-primary btn-sm" disabled={savingRoom || !newRoom.category || !newRoom.price}
+                onClick={async () => {
+                  setSavingRoom(true); setRoomError('');
+                  try {
+                    const res = await apiCall(`/api/hotels/${hotel.id}/rooms`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ category: newRoom.category, price: parseFloat(newRoom.price), total_units: parseInt(newRoom.total_units), amenities: newRoom.amenities, description: newRoom.description, max_occupancy: parseInt(newRoom.max_occupancy), size_sqm: parseInt(newRoom.size_sqm) })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Failed');
+                    setRooms(prev => [...prev, data.room]);
+                    setNewRoom(BLANK_ROOM);
+                    setShowAddRoom(false);
+                  } catch (err) { setRoomError(err.message); }
+                  finally { setSavingRoom(false); }
+                }}>
+                {savingRoom ? 'Saving...' : 'Add Room Category'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

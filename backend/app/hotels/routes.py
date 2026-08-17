@@ -271,6 +271,24 @@ def get_guest_bookings():
     }
 
 
+@hotels_bp.route('/owner/my-hotel', methods=['GET'])
+@jwt_required()
+def get_my_hotel():
+    """Owner: get their own hotel details + rooms"""
+    current_user_id = get_jwt_identity()
+    user = User.query.get(int(current_user_id))
+    if not user:
+        return {'error': 'User not found'}, 404
+
+    hotel = Hotel.query.filter_by(owner_id=user.id).first()
+    if not hotel:
+        return {'error': 'No hotel found for this account'}, 404
+
+    rooms = Room.query.filter_by(hotel_id=hotel.id).all()
+    hotel_data = hotel.to_dict()
+    hotel_data['rooms'] = [r.to_dict() for r in rooms]
+    return {'hotel': hotel_data}
+
 @hotels_bp.route('/<int:hotel_id>', methods=['GET'])
 @jwt_required()
 @hotel_owner_required
