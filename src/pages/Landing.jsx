@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
@@ -6,36 +5,6 @@ import Reveal from '../components/Reveal';
 import Counter from '../components/Counter';
 
 export default function Landing() {
-  const [activeTab, setActiveTab] = useState('pathways');
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const pathways = document.getElementById('pathways');
-      const workflow = document.getElementById('workflow');
-      const dashboard = document.getElementById('dashboard');
-      const scrollPos = window.scrollY + 280;
-
-      if (dashboard && scrollPos >= dashboard.offsetTop) {
-        setActiveTab('dashboard');
-      } else if (workflow && scrollPos >= workflow.offsetTop) {
-        setActiveTab('workflow');
-      } else if (pathways && scrollPos >= pathways.offsetTop) {
-        setActiveTab('pathways');
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToSection = (id) => {
-    setActiveTab(id);
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <>
       <Nav />
@@ -111,45 +80,6 @@ export default function Landing() {
           </Reveal>
         </div>
       </section>
-
-      {/* Interactive Platform Navigation Bar */}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 90,
-        background: 'var(--parchment)',
-        borderBottom: '1px solid var(--hairline)',
-        padding: '16px 0',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
-      }}>
-        <div className="container" style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '40px'
-        }}>
-          <button 
-            type="button"
-            className={`landing-tab-btn ${activeTab === 'pathways' ? 'active' : ''}`}
-            onClick={() => scrollToSection('pathways')}
-          >
-            Onboarding
-          </button>
-          <button 
-            type="button"
-            className={`landing-tab-btn ${activeTab === 'workflow' ? 'active' : ''}`}
-            onClick={() => scrollToSection('workflow')}
-          >
-            Approval Flow
-          </button>
-          <button 
-            type="button"
-            className={`landing-tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => scrollToSection('dashboard')}
-          >
-            Dashboard
-          </button>
-        </div>
-      </div>
 
       <section id="pathways">
         <div className="container">
