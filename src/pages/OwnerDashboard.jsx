@@ -28,13 +28,13 @@ const BLANK_ROOM = { category: '', price: '', total_units: 1, amenities: [], des
 const AMENITIES = ['Wi-Fi','AC','Minibar','City View','Ocean View','Balcony','Work Desk','Safe','TV','Coffee Machine'];
 
 export default function OwnerDashboard() {
-  const { user, apiCall, logout } = useAuth();
-  const [hotel, setHotel] = useState(null);
-  const [bookings, setBookings] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [rooms, setRooms] = useState([]);
+  const { user, apiCall, logout, cachedHotel } = useAuth();
+  const [hotel, setHotel] = useState(cachedHotel);
+  const [bookings, setBookings] = useState(cachedHotel?.bookings || []);
+  const [reviews, setReviews] = useState(cachedHotel?.reviews || []);
+  const [rooms, setRooms] = useState(cachedHotel?.rooms || []);
   const [analytics, setAnalytics] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedHotel);
   const [error, setError] = useState('');
   const [showAddRoom, setShowAddRoom] = useState(false);
   const [newRoom, setNewRoom] = useState(BLANK_ROOM);
@@ -47,7 +47,7 @@ export default function OwnerDashboard() {
 
   const loadDashboard = async () => {
     try {
-      setLoading(true);
+      if (!cachedHotel && !hotel) setLoading(true);
       const res = await apiCall('/api/hotels/owner/my-hotel');
       if (res.ok) {
         const data = await res.json();
@@ -135,10 +135,22 @@ export default function OwnerDashboard() {
     logout();
   };
 
-  if (loading) {
+  if (loading && !hotel) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-        Loading dashboard...
+      <div className="app-shell">
+        <Sidebar
+          items={sidebarItems.map(section => ({
+            ...section,
+            links: section.links.map(link => link.text === 'Log out' ? { ...link, onClick: handleLogout } : link)
+          }))}
+          who={{ initials: 'MH', name: 'My Hotel', subtitle: 'Owner · Active' }}
+        />
+        <main className="app-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: '#64748b', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🏨</div>
+            Loading dashboard...
+          </div>
+        </main>
       </div>
     );
   }

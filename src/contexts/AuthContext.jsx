@@ -14,6 +14,14 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [cachedHotel, setCachedHotel] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem('owner_hotel_cache');
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  });
 
   // Check for stored auth token on app load
   useEffect(() => {
@@ -31,6 +39,16 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
+  const updateHotelCache = (hotelData) => {
+    if (!hotelData) return;
+    setCachedHotel(hotelData);
+    try {
+      sessionStorage.setItem('owner_hotel_cache', JSON.stringify(hotelData));
+    } catch (e) {
+      console.error('Failed to write hotel cache:', e);
+    }
+  };
+
   const login = (token, userData) => {
     localStorage.setItem('access_token', token);
     localStorage.setItem('user', JSON.stringify(userData));
@@ -40,6 +58,8 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('owner_hotel_cache');
+    setCachedHotel(null);
     setUser(null);
   };
 
@@ -62,10 +82,17 @@ export function AuthProvider({ children }) {
     const response = await fetch(`${API_BASE_URL}${url}`, config);
     
     if (response.status === 401) {
-      // Token expired or invalid
       logout();
       window.location.href = '/login';
       throw new Error('Authentication required');
+    }
+
+    // Auto-cache hotel payload if it's the owner hotel route
+    if (url.includes('/api/hotels/owner/my-hotel') && response.ok) {
+      const cloned = response.clone();
+      cloned.json().then(data => {
+        if (data.hotel) updateHotelCache(data.hotel);
+      }).catch(() => {});
     }
     
     return response;
@@ -74,6 +101,8 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     loading,
+    cachedHotel,
+    updateHotelCache,
     login,
     logout,
     getAuthHeaders,

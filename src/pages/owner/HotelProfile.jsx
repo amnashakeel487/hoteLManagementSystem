@@ -24,10 +24,10 @@ const sidebarItems = [
 ];
 
 export default function HotelProfile() {
-  const { user, apiCall, logout } = useAuth();
-  const [hotel, setHotel] = useState(null);
-  const [formData, setFormData] = useState({});
-  const [loading, setLoading] = useState(true);
+  const { user, apiCall, logout, cachedHotel } = useAuth();
+  const [hotel, setHotel] = useState(cachedHotel);
+  const [formData, setFormData] = useState(cachedHotel || {});
+  const [loading, setLoading] = useState(!cachedHotel);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -45,7 +45,7 @@ export default function HotelProfile() {
 
   const loadHotelProfile = async () => {
     try {
-      setLoading(true);
+      if (!cachedHotel && !hotel) setLoading(true);
       const res = await apiCall('/api/hotels/owner/my-hotel');
       if (res.ok) {
         const data = await res.json();
@@ -115,11 +115,22 @@ export default function HotelProfile() {
     logout();
   };
 
-  if (loading) {
+  if (loading && !hotel) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '12px', color: '#64748b' }}>
-        <div style={{ fontSize: '1.5rem' }}>🏨</div>
-        Loading hotel profile...
+      <div className="app-shell">
+        <Sidebar
+          items={sidebarItems.map(section => ({
+            ...section,
+            links: section.links.map(link => link.text === 'Log out' ? { ...link, onClick: handleLogout } : link)
+          }))}
+          who={{ initials: 'MH', name: 'My Hotel', subtitle: 'Owner · Active' }}
+        />
+        <main className="app-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: '#64748b', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🏨</div>
+            Loading hotel profile...
+          </div>
+        </main>
       </div>
     );
   }

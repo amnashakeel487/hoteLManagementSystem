@@ -39,10 +39,10 @@ const AVAILABLE_AMENITIES = [
 ];
 
 export default function RoomsPricing() {
-  const { apiCall, logout } = useAuth();
-  const [hotel, setHotel] = useState(null);
-  const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { apiCall, logout, cachedHotel } = useAuth();
+  const [hotel, setHotel] = useState(cachedHotel);
+  const [rooms, setRooms] = useState(cachedHotel?.rooms || []);
+  const [loading, setLoading] = useState(!cachedHotel);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -54,26 +54,27 @@ export default function RoomsPricing() {
   // Edit room (inline)
   const [editingRoom, setEditingRoom] = useState(null);
 
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const res = await apiCall('/api/hotels/owner/my-hotel');
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error || 'Failed to load hotel data');
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        if (!cachedHotel && !hotel) setLoading(true);
+        setError('');
+        const res = await apiCall('/api/hotels/owner/my-hotel');
+        if (!res.ok) {
+          const d = await res.json();
+          throw new Error(d.error || 'Failed to load hotel data');
+        }
+        const data = await res.json();
+        setHotel(data.hotel);
+        setRooms(data.hotel.rooms || []);
+      } catch (err) {
+        if (!hotel) setError(err.message);
+      } finally {
+        setLoading(false);
       }
-      const data = await res.json();
-      setHotel(data.hotel);
-      setRooms(data.hotel.rooms || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    loadData();
+  }, []);
 
   const handleLogout = () => logout();
 
@@ -86,7 +87,8 @@ export default function RoomsPricing() {
   };
 
   // ─── Add room ──────────────────────────────────────────────────────────────
-  const handleAddRoom = async () => {
+  const handleAddRoom = async (e) => {
+    e.preventDefault();
     if (!newRoom.category || !newRoom.price) return;
     setSaving(true);
     setSaveError('');
@@ -97,18 +99,18 @@ export default function RoomsPricing() {
         body: JSON.stringify({
           category: newRoom.category,
           price: parseFloat(newRoom.price),
-          total_units: parseInt(newRoom.total_units),
+          total_units: parseInt(newRoom.total_units) || 1,
           amenities: newRoom.amenities,
           description: newRoom.description,
-          max_occupancy: parseInt(newRoom.max_occupancy),
-          size_sqm: parseInt(newRoom.size_sqm)
+          max_occupancy: parseInt(newRoom.max_occupancy) || 2,
+          size_sqm: parseInt(newRoom.size_sqm) || 25
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to add room');
       setRooms(prev => [...prev, data.room]);
-      setNewRoom(BLANK_ROOM);
       setShowAddModal(false);
+      setNewRoom(BLANK_ROOM);
     } catch (err) {
       setSaveError(err.message);
     } finally {
@@ -116,8 +118,10 @@ export default function RoomsPricing() {
     }
   };
 
-  // ─── Edit / save room ──────────────────────────────────────────────────────
-  const handleSaveRoom = async () => {
+  // ─── Edit room ──────────────────────────────────────────────────────────────
+  const handleEditSave = async (e) => {
+    e.preventDefault();
+    if (!editingRoom) return;
     setSaving(true);
     setSaveError('');
     try {
@@ -158,10 +162,21 @@ export default function RoomsPricing() {
   };
 
   // ─── Loading / error states ────────────────────────────────────────────────
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '12px', color: '#64748b' }}>
-      <div style={{ fontSize: '1.5rem' }}>🛏</div>
-      Loading rooms...
+  if (loading && !hotel) return (
+    <div className="app-shell">
+      <Sidebar
+        items={sidebarItems.map(section => ({
+          ...section,
+          links: section.links.map(link => link.text === 'Log out' ? { ...link, onClick: handleLogout } : link)
+        }))}
+        who={{ initials: 'MH', name: 'My Hotel', subtitle: 'Owner · Active' }}
+      />
+      <main className="app-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: '#64748b', textAlign: 'center' }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🛏</div>
+          Loading rooms...
+        </div>
+      </main>
     </div>
   );
 

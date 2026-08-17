@@ -24,10 +24,10 @@ const sidebarItems = [
 ];
 
 export default function Reviews() {
-  const { user, apiCall, logout } = useAuth();
-  const [hotel, setHotel] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { user, apiCall, logout, cachedHotel } = useAuth();
+  const [hotel, setHotel] = useState(cachedHotel);
+  const [reviews, setReviews] = useState(cachedHotel?.reviews || []);
+  const [loading, setLoading] = useState(!cachedHotel);
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
 
@@ -37,7 +37,7 @@ export default function Reviews() {
 
   const loadReviewsData = async () => {
     try {
-      setLoading(true);
+      if (!cachedHotel && !hotel) setLoading(true);
       const hRes = await apiCall('/api/hotels/owner/my-hotel');
       if (hRes.ok) {
         const hData = await hRes.json();
@@ -78,11 +78,22 @@ export default function Reviews() {
     1: reviews.filter(r => r.rating === 1).length,
   };
 
-  if (loading) {
+  if (loading && !hotel) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '12px', color: '#64748b' }}>
-        <div style={{ fontSize: '1.5rem' }}>★</div>
-        Loading reviews...
+      <div className="app-shell">
+        <Sidebar
+          items={sidebarItems.map(section => ({
+            ...section,
+            links: section.links.map(link => link.text === 'Log out' ? { ...link, onClick: handleLogout } : link)
+          }))}
+          who={{ initials: 'MH', name: 'My Hotel', subtitle: 'Owner · Active' }}
+        />
+        <main className="app-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: '#64748b', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>★</div>
+            Loading reviews...
+          </div>
+        </main>
       </div>
     );
   }

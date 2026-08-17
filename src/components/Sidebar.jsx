@@ -1,21 +1,6 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Sidebar({ role = 'owner', items, who }) {
-  const [navigating, setNavigating] = useState(false);
-  const navigate = useNavigate();
-
-  const handleNavigation = (href) => {
-    if (href && href !== '#') {
-      setNavigating(true);
-      // Small delay to show visual feedback
-      setTimeout(() => {
-        navigate(href);
-        setNavigating(false);
-      }, 50);
-    }
-  };
-
   return (
     <aside className="app-sidebar">
       <Link to="/" className="brand"><span className="mark"></span> Stayfolio</Link>
@@ -30,7 +15,6 @@ export default function Sidebar({ role = 'owner', items, who }) {
                     key={link.text} 
                     onClick={link.onClick} 
                     className={`nav-btn ${link.active ? 'active' : ''}`}
-                    disabled={navigating}
                   >
                     <span className="ico">{link.icon}</span> {link.text}
                   </button>
@@ -39,18 +23,14 @@ export default function Sidebar({ role = 'owner', items, who }) {
               
               if (link.href && link.href !== '#') {
                 return (
-                  <button
+                  <Link
                     key={link.text}
-                    onClick={() => handleNavigation(link.href)}
+                    to={link.href}
                     className={`nav-btn ${link.active ? 'active' : ''}`}
-                    disabled={navigating}
-                    style={{ 
-                      opacity: navigating ? 0.7 : 1,
-                      transition: 'all 0.15s ease-out'
-                    }}
+                    style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}
                   >
                     <span className="ico">{link.icon}</span> {link.text}
-                  </button>
+                  </Link>
                 );
               }
               
@@ -64,10 +44,10 @@ export default function Sidebar({ role = 'owner', items, who }) {
         ))}
       </nav>
       <div className="side-foot">
-        <div className="avatar" style={who.avatarStyle}>{who.initials}</div>
+        <div className="avatar" style={who?.avatarStyle}>{who?.initials}</div>
         <div className="who">
-          <b>{who.name}</b>
-          <span>{who.subtitle}</span>
+          <b>{who?.name}</b>
+          <span>{who?.subtitle}</span>
         </div>
       </div>
     </aside>

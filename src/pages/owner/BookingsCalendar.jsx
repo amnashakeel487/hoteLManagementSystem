@@ -24,10 +24,10 @@ const sidebarItems = [
 ];
 
 export default function BookingsCalendar() {
-  const { user, apiCall, logout } = useAuth();
-  const [hotel, setHotel] = useState(null);
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { user, apiCall, logout, cachedHotel } = useAuth();
+  const [hotel, setHotel] = useState(cachedHotel);
+  const [bookings, setBookings] = useState(cachedHotel?.bookings || []);
+  const [loading, setLoading] = useState(!cachedHotel);
   const [filter, setFilter] = useState('all');
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
 
@@ -37,7 +37,7 @@ export default function BookingsCalendar() {
 
   const loadBookingsData = async () => {
     try {
-      setLoading(true);
+      if (!cachedHotel && !hotel) setLoading(true);
       const hRes = await apiCall('/api/hotels/owner/my-hotel');
       if (hRes.ok) {
         const hData = await hRes.json();
@@ -103,6 +103,8 @@ export default function BookingsCalendar() {
     return days;
   };
 
+  const hotelName = hotel?.name || 'My Hotel';
+
   return (
     <div className="app-shell">
       <Sidebar
@@ -113,9 +115,9 @@ export default function BookingsCalendar() {
           )
         }))}
         who={{ 
-          initials: hotel.name.split(' ').map(n => n[0]).join(''), 
-          name: hotel.name, 
-          subtitle: `Owner · ${hotel.status}` 
+          initials: hotelName.split(' ').map(n => n[0]).join('').slice(0, 2), 
+          name: hotelName, 
+          subtitle: `Owner · ${hotel?.status || 'Active'}` 
         }}
       />
 
@@ -130,13 +132,13 @@ export default function BookingsCalendar() {
               style={{ width: '140px' }}
             >
               <option value="all">All bookings</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              <option value="pending">Pending ({statusCounts.pending})</option>
+              <option value="approved">Approved ({statusCounts.approved})</option>
+              <option value="rejected">Rejected ({statusCounts.rejected})</option>
             </select>
             <button className="icon-btn">🔔</button>
             <div className="avatar" style={{ width: 34, height: 34, fontSize: '.75rem' }}>
-              {hotel.name.split(' ').map(n => n[0]).join('')}
+              {hotelName.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
           </div>
         </div>
