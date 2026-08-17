@@ -5,18 +5,40 @@ from flask import current_app, render_template
 
 logger = logging.getLogger(__name__)
 
+def _get_setting(key, default=''):
+    """Resolve setting with database SystemSetting priority, then os.environ, then Flask config."""
+    try:
+        from app.models import SystemSetting
+        val = SystemSetting.get(key)
+        if val is not None and val != '':
+            return val
+    except Exception:
+        pass
+    try:
+        val = os.environ.get(key)
+        if val:
+            return val
+    except Exception:
+        pass
+    try:
+        if current_app:
+            return current_app.config.get(key) or default
+    except Exception:
+        pass
+    return default
+
 def _send_async_task(app, to, subject, body_text, body_html):
     """Background worker to send email without blocking the HTTP request."""
     with app.app_context():
         try:
             # 1. Try Resend if API key is provided
-            resend_api_key = os.environ.get('RESEND_API_KEY') or app.config.get('RESEND_API_KEY')
+            resend_api_key = _get_setting('RESEND_API_KEY')
             if resend_api_key:
                 try:
                     import urllib.request
                     import json
                     
-                    sender = app.config.get('MAIL_DEFAULT_SENDER') or 'Stayfolio <noreply@stayfolio.com>'
+                    sender = _get_setting('MAIL_DEFAULT_SENDER', 'Stayfolio <noreply@stayfolio.com>')
                     payload = {
                         "from": sender,
                         "to": [to] if isinstance(to, str) else to,
@@ -41,14 +63,26 @@ def _send_async_task(app, to, subject, body_text, body_html):
                 except Exception as resend_err:
                     logger.warning(f"Resend send failed, falling back to Flask-Mail: {resend_err}")
 
-            # 2. Try Flask-Mail / SMTP
+            # 2. Try Flask-Mail / SMTP with runtime credentials
             from app import mail
             from flask_mail import Message
 
+            # Dynamically apply latest configured credentials
+            mail_server = _get_setting('MAIL_SERVER')
+            if mail_server:
+                app.config['MAIL_SERVER'] = mail_server
+                app.config['MAIL_PORT'] = int(_get_setting('MAIL_PORT', 587))
+                app.config['MAIL_USE_TLS'] = str(_get_setting('MAIL_USE_TLS', 'true')).lower() in ('true', '1', 'on')
+                app.config['MAIL_USERNAME'] = _get_setting('MAIL_USERNAME')
+                pwd = _get_setting('MAIL_PASSWORD')
+                if pwd:
+                    app.config['MAIL_PASSWORD'] = pwd
+
+            sender = _get_setting('MAIL_DEFAULT_SENDER', 'Stayfolio <noreply@stayfolio.com>')
             msg = Message(
                 subject=subject,
                 recipients=[to] if isinstance(to, str) else to,
-                sender=app.config.get('MAIL_DEFAULT_SENDER', 'noreply@stayfolio.com')
+                sender=sender
             )
             if body_text:
                 msg.body = body_text
@@ -85,8 +119,8 @@ def send_email_async(to, subject, body_text=None, body_html=None):
         return False
 
 def _get_base_url():
-    """Resolve base frontend URL from environment or configuration."""
-    return os.environ.get('FRONTEND_URL') or os.environ.get('APP_URL') or 'https://hotel-management-system.vercel.app'
+    """Resolve base frontend URL from settings, environment, or default."""
+    return _get_setting('FRONTEND_URL') or _get_setting('APP_URL') or 'https://hotel-management-system.vercel.app'
 
 # ============================================================================
 # EVENT 1: Admin creates a hotel + owner account directly (Option 1 onboarding)

@@ -314,49 +314,63 @@ def get_admin_stats(user):
 # EMAIL CONFIGURATION ENDPOINTS (Admin Settings)
 # ============================================================================
 def _update_env_file(key_value_pairs):
-    """Safely update or append key-value pairs in the backend .env file and active environment."""
+    """Safely update key-value pairs in database SystemSetting table, multiple .env files, and runtime config."""
     import os
-    env_path = os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), '.env')
+    from app.models import SystemSetting
     
-    existing_lines = []
-    if os.path.exists(env_path):
-        try:
-            with open(env_path, 'r', encoding='utf-8') as f:
-                existing_lines = f.readlines()
-        except Exception:
-            existing_lines = []
-            
-    updated_keys = set()
-    new_lines = []
-    
-    for line in existing_lines:
-        stripped = line.strip()
-        if stripped and not stripped.startswith('#') and '=' in stripped:
-            k, _ = stripped.split('=', 1)
-            k = k.strip()
-            if k in key_value_pairs:
-                val = key_value_pairs[k]
-                if val is not None:
-                    new_lines.append(f"{k}={val}\n")
-                    updated_keys.add(k)
-                    continue
-        new_lines.append(line)
-        
-    for k, val in key_value_pairs.items():
-        if k not in updated_keys and val is not None:
-            new_lines.append(f"{k}={val}\n")
-            
-    try:
-        with open(env_path, 'w', encoding='utf-8') as f:
-            f.writelines(new_lines)
-    except Exception as write_err:
-        from flask import current_app
-        current_app.logger.warning(f"Could not write to .env file: {write_err}")
-        
-    # Update active os.environ and Flask config in memory
+    # 1. Save to Database (SystemSetting table) - Permanent persistence across restarts & deploys
     for k, val in key_value_pairs.items():
         if val is not None:
-            import os
+            SystemSetting.set(k, str(val))
+            
+    # 2. Write to local .env files (both backend/.env and workspace root .env)
+    backend_dir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    root_dir = os.path.abspath(os.path.dirname(backend_dir))
+    
+    env_paths = [
+        os.path.join(backend_dir, '.env'),
+        os.path.join(root_dir, '.env')
+    ]
+    
+    for env_path in env_paths:
+        try:
+            existing_lines = []
+            if os.path.exists(env_path):
+                with open(env_path, 'r', encoding='utf-8') as f:
+                    existing_lines = f.readlines()
+                    
+            updated_keys = set()
+            new_lines = []
+            
+            for line in existing_lines:
+                clean_line = line.rstrip('\r\n')
+                if clean_line and not clean_line.startswith('#') and '=' in clean_line:
+                    k, _ = clean_line.split('=', 1)
+                    k = k.strip()
+                    if k in key_value_pairs:
+                        val = key_value_pairs[k]
+                        if val is not None:
+                            new_lines.append(f"{k}={val}\n")
+                            updated_keys.add(k)
+                            continue
+                if clean_line:
+                    new_lines.append(clean_line + "\n")
+                else:
+                    new_lines.append("\n")
+                
+            for k, val in key_value_pairs.items():
+                if k not in updated_keys and val is not None:
+                    new_lines.append(f"{k}={val}\n")
+                    
+            with open(env_path, 'w', encoding='utf-8') as f:
+                f.writelines(new_lines)
+        except Exception as write_err:
+            from flask import current_app
+            current_app.logger.warning(f"Could not write to {env_path}: {write_err}")
+            
+    # 3. Update active os.environ and Flask config in memory
+    for k, val in key_value_pairs.items():
+        if val is not None:
             os.environ[k] = str(val)
             from flask import current_app
             current_app.config[k] = val
@@ -365,35 +379,49 @@ def _update_env_file(key_value_pairs):
 @jwt_required()
 @role_required('admin')
 def get_email_settings(user):
-    """Get current email configuration for Admin Settings UI"""
+    """Get current email configuration for Admin Settings UI with DB priority"""
     import os
     from flask import current_app
+    from app.models import SystemSetting
     
-    resend_key = os.environ.get('RESEND_API_KEY') or current_app.config.get('RESEND_API_KEY') or ''
-    mail_pwd = os.environ.get('MAIL_PASSWORD') or current_app.config.get('MAIL_PASSWORD') or ''
+    def _get_val(key, default=''):
+        try:
+            db_val = SystemSetting.get(key)
+            if db_val is not None and db_val != '':
+                return db_val
+        except Exception:
+            pass
+        return os.environ.get(key) or current_app.config.get(key) or default
+        
+    resend_key = _get_val('RESEND_API_KEY', '')
+    mail_pwd = _get_val('MAIL_PASSWORD', '')
     
     return {
+        'provider': _get_val('MAIL_PROVIDER', 'resend' if resend_key else 'smtp'),
         'resend_api_key': resend_key[:8] + '••••••••' if len(resend_key) > 8 else resend_key,
         'has_resend_api_key': bool(resend_key),
-        'mail_server': os.environ.get('MAIL_SERVER') or current_app.config.get('MAIL_SERVER') or 'smtp.gmail.com',
-        'mail_port': int(os.environ.get('MAIL_PORT') or current_app.config.get('MAIL_PORT') or 587),
-        'mail_use_tls': str(os.environ.get('MAIL_USE_TLS') or current_app.config.get('MAIL_USE_TLS') or 'true').lower() in ('true', '1', 'on'),
-        'mail_username': os.environ.get('MAIL_USERNAME') or current_app.config.get('MAIL_USERNAME') or '',
+        'mail_server': _get_val('MAIL_SERVER', 'smtp.gmail.com'),
+        'mail_port': int(_get_val('MAIL_PORT', 587)),
+        'mail_use_tls': str(_get_val('MAIL_USE_TLS', 'true')).lower() in ('true', '1', 'on'),
+        'mail_username': _get_val('MAIL_USERNAME', ''),
         'has_mail_password': bool(mail_pwd),
-        'mail_default_sender': os.environ.get('MAIL_DEFAULT_SENDER') or current_app.config.get('MAIL_DEFAULT_SENDER') or 'Stayfolio <noreply@stayfolio.com>',
-        'mail_admin_address': os.environ.get('MAIL_ADMIN_ADDRESS') or os.environ.get('ADMIN_EMAIL') or current_app.config.get('MAIL_ADMIN_ADDRESS') or 'admin@stayfolio.com',
-        'frontend_url': os.environ.get('FRONTEND_URL') or os.environ.get('APP_URL') or current_app.config.get('FRONTEND_URL') or 'https://hotel-management-system.vercel.app'
+        'mail_default_sender': _get_val('MAIL_DEFAULT_SENDER', 'Stayfolio <noreply@stayfolio.com>'),
+        'mail_admin_address': _get_val('MAIL_ADMIN_ADDRESS', _get_val('ADMIN_EMAIL', 'admin@stayfolio.com')),
+        'frontend_url': _get_val('FRONTEND_URL', _get_val('APP_URL', 'https://hotel-management-system.vercel.app'))
     }
 
 @admin_bp.route('/settings/email', methods=['POST'])
 @jwt_required()
 @role_required('admin')
 def save_email_settings(user):
-    """Save email configuration directly from Admin Settings to .env file and runtime config"""
+    """Save email configuration directly from Admin Settings to database, .env file, and runtime config"""
     data = request.get_json() or {}
     
     updates = {}
     
+    if 'provider' in data:
+        updates['MAIL_PROVIDER'] = data['provider'].strip()
+
     if 'resend_api_key' in data:
         raw_val = data['resend_api_key'].strip()
         # If user didn't change the masked string, keep existing
@@ -430,7 +458,7 @@ def save_email_settings(user):
     _update_env_file(updates)
     
     return {
-        'message': 'Email configuration saved to environment successfully',
+        'message': 'Email configuration saved to environment and database successfully',
         'updated_keys': list(updates.keys())
     }
 

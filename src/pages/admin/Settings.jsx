@@ -88,7 +88,7 @@ export default function Settings() {
       if (res.ok) {
         const data = await res.json();
         setEmailConfig({
-          provider: data.has_resend_api_key ? 'resend' : 'smtp',
+          provider: data.provider || (data.has_resend_api_key ? 'resend' : 'smtp'),
           resend_api_key: data.resend_api_key || '',
           has_resend_api_key: data.has_resend_api_key || false,
           mail_server: data.mail_server || 'smtp.gmail.com',
@@ -136,6 +136,7 @@ export default function Settings() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            provider: emailConfig.provider,
             resend_api_key: emailConfig.resend_api_key,
             mail_server: emailConfig.mail_server,
             mail_port: emailConfig.mail_port,
@@ -150,7 +151,7 @@ export default function Settings() {
 
         if (res.ok) {
           setSaved(true);
-          setSaveMessage('✓ Email environment settings saved successfully');
+          setSaveMessage('✓ Email settings saved to .env and database successfully');
           setTimeout(() => setSaved(false), 4000);
           loadEmailSettings();
         } else {

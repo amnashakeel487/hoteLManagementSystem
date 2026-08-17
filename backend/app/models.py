@@ -253,3 +253,32 @@ class CleaningRequest(db.Model):
             'assigned_team': self.assigned_team,
             'created_at': self.created_at.isoformat()
         }
+
+class SystemSetting(db.Model):
+    __tablename__ = 'system_settings'
+    key = db.Column(db.String(100), primary_key=True)
+    value = db.Column(db.Text, nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    @classmethod
+    def get(cls, key, default=None):
+        try:
+            record = cls.query.filter_by(key=key).first()
+            return record.value if record and record.value is not None else default
+        except Exception:
+            return default
+
+    @classmethod
+    def set(cls, key, value):
+        try:
+            record = cls.query.filter_by(key=key).first()
+            if not record:
+                record = cls(key=key, value=value)
+                db.session.add(record)
+            else:
+                record.value = value
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            return False
