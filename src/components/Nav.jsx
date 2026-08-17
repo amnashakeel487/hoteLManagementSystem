@@ -13,7 +13,7 @@ export default function Nav() {
         const pathways = document.getElementById('pathways');
         const workflow = document.getElementById('workflow');
         const dashboard = document.getElementById('dashboard');
-        const scrollPos = window.scrollY + 250;
+        const scrollPos = window.scrollY + 280;
 
         if (dashboard && scrollPos >= dashboard.offsetTop) {
           setActiveSection('dashboard');
@@ -72,18 +72,11 @@ export default function Nav() {
           >
             Approval Flow
           </a>
-          <a 
-            href="#dashboard" 
-            onClick={(e) => handleSectionClick(e, 'dashboard')}
-            className={activeSection === 'dashboard' ? 'active-nav-link' : ''}
-          >
-            Dashboard
-          </a>
-          <Link to="/admin" onClick={() => setOpen(false)}>Admin</Link>
+          <Link to="/admin-login" onClick={() => setOpen(false)} style={{ fontWeight: 600 }}>Admin</Link>
         </div>
         <div className="nav-cta">
           <Link to="/explore" className="btn btn-ghost btn-sm" style={{ borderColor: 'var(--brass)', color: 'var(--brass-dark)' }}>Book a stay</Link>
-          <Link to="/login" className="btn btn-ghost btn-sm">Log in</Link>
+          <Link to="/login" className="btn btn-ghost btn-sm" style={{ fontWeight: 600 }}>Owner Login</Link>
           <Link to="/register" className="btn btn-primary btn-sm">Register hotel</Link>
           <button className="nav-toggle" aria-label="Menu" onClick={() => setOpen((o) => !o)}>
             <span></span>

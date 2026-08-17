@@ -5,6 +5,7 @@ import PageTransition from './components/PageTransition';
 import Landing from './pages/Landing';
 import Register from './pages/Register';
 import Login from './pages/Login';
+import AdminLogin from './pages/AdminLogin';
 import Pending from './pages/Pending';
 import OwnerDashboard from './pages/OwnerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -40,6 +41,7 @@ function AnimatedRoutes() {
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/pending" element={<Pending />} />
         <Route 
           path="/owner" 
