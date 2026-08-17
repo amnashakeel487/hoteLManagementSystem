@@ -29,17 +29,28 @@ def create_app(config_name=None):
     migrate.init_app(app, db)
     jwt.init_app(app)
     
-    # Configure CORS based on environment
-    if config_name == 'production':
-        raw_origins = os.environ.get('CORS_ORIGINS', '').strip()
-        if raw_origins and raw_origins != '*':
-            origins = [o.strip() for o in raw_origins.split(',') if o.strip()]
-            CORS(app, origins=origins, supports_credentials=True)
-        else:
-            CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-    else:
-        # Development: allow localhost
-        CORS(app, origins=['http://localhost:5173', 'http://127.0.0.1:5173'], supports_credentials=True)
+    # Configure robust CORS for local development and all Vercel deployments
+    import re
+    allowed_origins = [
+        re.compile(r"^https?://localhost(:\d+)?$"),
+        re.compile(r"^https?://127\.0\.0\.1(:\d+)?$"),
+        re.compile(r"^https://.*\.vercel\.app$")
+    ]
+    
+    custom_origins = os.environ.get('CORS_ORIGINS', '')
+    if custom_origins:
+        for o in custom_origins.split(','):
+            cleaned = o.strip()
+            if cleaned and cleaned != '*':
+                allowed_origins.append(cleaned)
+                
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": allowed_origins}, r"/health": {"origins": "*"}},
+        supports_credentials=True,
+        allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+    )
     
     mail.init_app(app)
     limiter.init_app(app)
