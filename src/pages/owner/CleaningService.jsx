@@ -27,7 +27,7 @@ export default function CleaningService() {
   const { user, apiCall, logout, cachedHotel } = useAuth();
   const [hotel, setHotel] = useState(cachedHotel);
   const [cleaningRequests, setCleaningRequests] = useState([]);
-  const [loading, setLoading] = useState(!cachedHotel);
+  const [loading, setLoading] = useState(true); // always verify status fresh
   const [isEligible, setIsEligible] = useState(true);
   const [monthlyBookings, setMonthlyBookings] = useState(0);
   const [showRequestForm, setShowRequestForm] = useState(false);

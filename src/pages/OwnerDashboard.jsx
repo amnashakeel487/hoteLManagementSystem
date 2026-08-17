@@ -34,7 +34,9 @@ export default function OwnerDashboard() {
   const [reviews, setReviews] = useState(cachedHotel?.reviews || []);
   const [rooms, setRooms] = useState(cachedHotel?.rooms || []);
   const [analytics, setAnalytics] = useState(null);
-  const [loading, setLoading] = useState(!cachedHotel);
+  // Always start loading=true so we ALWAYS do a fresh status check before rendering the dashboard.
+  // This prevents a stale sessionStorage cache from bypassing the pending/rejected status gate.
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAddRoom, setShowAddRoom] = useState(false);
   const [newRoom, setNewRoom] = useState(BLANK_ROOM);
@@ -135,7 +137,9 @@ export default function OwnerDashboard() {
     logout();
   };
 
-  if (loading && !hotel) {
+  if (loading) {
+    const hotelName = hotel?.name || 'My Hotel';
+    const initials = hotelName.split(' ').map(n => n[0]).join('').slice(0, 2);
     return (
       <div className="app-shell">
         <Sidebar
@@ -143,12 +147,12 @@ export default function OwnerDashboard() {
             ...section,
             links: section.links.map(link => link.text === 'Log out' ? { ...link, onClick: handleLogout } : link)
           }))}
-          who={{ initials: 'MH', name: 'My Hotel', subtitle: 'Owner · Active' }}
+          who={{ initials, name: hotelName, subtitle: 'Owner · Verifying...' }}
         />
         <main className="app-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ color: '#64748b', textAlign: 'center' }}>
             <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🏨</div>
-            Loading dashboard...
+            Verifying hotel status...
           </div>
         </main>
       </div>

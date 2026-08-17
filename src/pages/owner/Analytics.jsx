@@ -26,7 +26,7 @@ const sidebarItems = [
 export default function Analytics() {
   const { user, apiCall, logout, cachedHotel } = useAuth();
   const [hotel, setHotel] = useState(cachedHotel);
-  const [loading, setLoading] = useState(!cachedHotel);
+  const [loading, setLoading] = useState(true); // always verify status fresh
   const [timeRange, setTimeRange] = useState('6m');
 
   const analyticsData = {

@@ -27,7 +27,7 @@ export default function Reviews() {
   const { user, apiCall, logout, cachedHotel } = useAuth();
   const [hotel, setHotel] = useState(cachedHotel);
   const [reviews, setReviews] = useState(cachedHotel?.reviews || []);
-  const [loading, setLoading] = useState(!cachedHotel);
+  const [loading, setLoading] = useState(true); // always verify status fresh
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
 

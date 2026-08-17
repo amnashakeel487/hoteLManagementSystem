@@ -27,7 +27,7 @@ export default function HotelProfile() {
   const { user, apiCall, logout, cachedHotel } = useAuth();
   const [hotel, setHotel] = useState(cachedHotel);
   const [formData, setFormData] = useState(cachedHotel || {});
-  const [loading, setLoading] = useState(!cachedHotel);
+  const [loading, setLoading] = useState(true); // always verify status fresh
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);

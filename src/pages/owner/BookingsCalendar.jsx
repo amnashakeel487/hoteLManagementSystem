@@ -27,7 +27,7 @@ export default function BookingsCalendar() {
   const { user, apiCall, logout, cachedHotel } = useAuth();
   const [hotel, setHotel] = useState(cachedHotel);
   const [bookings, setBookings] = useState(cachedHotel?.bookings || []);
-  const [loading, setLoading] = useState(!cachedHotel);
+  const [loading, setLoading] = useState(true); // always verify status fresh
   const [filter, setFilter] = useState('all');
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
 
