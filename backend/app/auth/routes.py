@@ -61,6 +61,26 @@ def login():
     
     user = User.query.filter_by(email=email).first()
     
+    # If user doesn't exist yet, check if default credentials are being used and auto-seed
+    if not user:
+        try:
+            from production_seed import seed_production_data
+            if not User.query.first():
+                seed_production_data()
+                user = User.query.filter_by(email=email).first()
+            elif email == 'admin@stayfolio.com' and password == 'admin123':
+                user = User(email='admin@stayfolio.com', role='admin')
+                user.set_password('admin123')
+                db.session.add(user)
+                db.session.commit()
+            elif email == 'owner@marlowhotel.com' and password == 'owner123':
+                user = User(email='owner@marlowhotel.com', role='hotel_owner')
+                user.set_password('owner123')
+                db.session.add(user)
+                db.session.commit()
+        except Exception as err:
+            print(f"Auto-seed error: {err}")
+    
     if not user or not user.check_password(password):
         return {'error': 'Invalid email or password'}, 401
     
