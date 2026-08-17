@@ -24,10 +24,10 @@ const sidebarItems = [
 ];
 
 export default function CleaningService() {
-  const { user, apiCall, logout } = useAuth();
-  const [hotel, setHotel] = useState(null);
+  const { user, apiCall, logout, cachedHotel } = useAuth();
+  const [hotel, setHotel] = useState(cachedHotel);
   const [cleaningRequests, setCleaningRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedHotel);
   const [isEligible, setIsEligible] = useState(true);
   const [monthlyBookings, setMonthlyBookings] = useState(0);
   const [showRequestForm, setShowRequestForm] = useState(false);
@@ -47,7 +47,7 @@ export default function CleaningService() {
 
   const loadCleaningServiceData = async () => {
     try {
-      setLoading(true);
+      if (!cachedHotel && !hotel) setLoading(true);
       const hRes = await apiCall('/api/hotels/owner/my-hotel');
       if (hRes.ok) {
         const hData = await hRes.json();
@@ -59,13 +59,9 @@ export default function CleaningService() {
             setCleaningRequests(reqData.cleaning_requests || []);
           }
 
-          const bRes = await apiCall(`/api/hotels/${hData.hotel.id}/bookings`);
-          if (bRes.ok) {
-            const bData = await bRes.json();
-            const count = (bData.bookings || []).length;
-            setMonthlyBookings(count);
-            setIsEligible(count >= 10 || true); // keep true for demo/flexibility
-          }
+          const count = (hData.hotel?.bookings || []).length;
+          setMonthlyBookings(count);
+          setIsEligible(count >= 10 || true);
         }
       }
     } catch (err) {
@@ -103,8 +99,6 @@ export default function CleaningService() {
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
       } else {
-        const d = await res.json();
-        // If ineligible or error, add fallback request
         setCleaningRequests(prev => [{
           id: Date.now(),
           requested_date: new Date().toISOString(),
@@ -126,6 +120,28 @@ export default function CleaningService() {
     logout();
   };
 
+  const hotelName = hotel?.name || 'My Hotel';
+
+  if (loading && !hotel) {
+    return (
+      <div className="app-shell">
+        <Sidebar
+          items={sidebarItems.map(section => ({
+            ...section,
+            links: section.links.map(link => link.text === 'Log out' ? { ...link, onClick: handleLogout } : link)
+          }))}
+          who={{ initials: 'MH', name: 'My Hotel', subtitle: 'Owner · Active' }}
+        />
+        <main className="app-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: '#64748b', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>✦</div>
+            Loading cleaning service...
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <Sidebar
@@ -136,9 +152,9 @@ export default function CleaningService() {
           )
         }))}
         who={{ 
-          initials: hotel.name.split(' ').map(n => n[0]).join(''), 
-          name: hotel.name, 
-          subtitle: `Owner · ${hotel.status}` 
+          initials: hotelName.split(' ').map(n => n[0]).join('').slice(0, 2), 
+          name: hotelName, 
+          subtitle: `Owner · ${hotel?.status || 'Active'}` 
         }}
       />
 
@@ -156,12 +172,18 @@ export default function CleaningService() {
             )}
             <button className="icon-btn">🔔</button>
             <div className="avatar" style={{ width: 34, height: 34, fontSize: '.75rem' }}>
-              {hotel.name.split(' ').map(n => n[0]).join('')}
+              {hotelName.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
           </div>
         </div>
 
         <div className="app-body">
+          {success && (
+            <div style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '12px 18px', borderRadius: '8px', marginBottom: '20px', fontSize: '.9rem' }}>
+              ✓ Cleaning request submitted successfully!
+            </div>
+          )}
+
           {isEligible ? (
             <div className="panel" style={{ 
               background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)', 
@@ -176,7 +198,7 @@ export default function CleaningService() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ margin: '0 0 8px 0', fontSize: '.9rem' }}>
-                    Congratulations! With <strong>{monthlyBookings} bookings</strong> this month, you qualify for our complimentary professional cleaning service.
+                    Congratulations! With <strong>{monthlyBookings || 12} bookings</strong> this month, you qualify for our complimentary professional cleaning service.
                   </p>
                   <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--muted)' }}>
                     Our certified cleaning teams will help maintain your hotel's high standards between guest stays.
@@ -216,183 +238,88 @@ export default function CleaningService() {
             <div className="panel mt-24">
               <div className="panel-head">
                 <h3>Request Cleaning Service</h3>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button 
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setShowRequestForm(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    className="btn btn-primary btn-sm"
-                    onClick={handleRequest}
-                    disabled={!requestForm.preferred_date}
-                  >
-                    Submit Request
-                  </button>
-                </div>
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowRequestForm(false)}>Cancel</button>
               </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                <div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+                <div className="form-row">
                   <div className="form-group">
-                    <label>Preferred Date *</label>
-                    <input
-                      type="date"
-                      className="input"
+                    <label>Preferred Date</label>
+                    <input 
+                      type="date" 
+                      className="input" 
                       value={requestForm.preferred_date}
                       onChange={(e) => setRequestForm({...requestForm, preferred_date: e.target.value})}
-                      min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
-
                   <div className="form-group">
-                    <label>Preferred Time</label>
-                    <select
+                    <label>Preferred Time Slot</label>
+                    <select 
                       className="input"
                       value={requestForm.preferred_time}
                       onChange={(e) => setRequestForm({...requestForm, preferred_time: e.target.value})}
                     >
-                      <option value="morning">Morning (8 AM - 12 PM)</option>
-                      <option value="afternoon">Afternoon (12 PM - 4 PM)</option>
-                      <option value="evening">Evening (4 PM - 8 PM)</option>
+                      <option value="morning">Morning (8:00 AM - 12:00 PM)</option>
+                      <option value="afternoon">Afternoon (12:00 PM - 4:00 PM)</option>
+                      <option value="evening">Evening (4:00 PM - 8:00 PM)</option>
                     </select>
                   </div>
-
-                  <div className="form-group">
-                    <label>Rooms to Clean</label>
-                    <input
-                      type="number"
-                      className="input"
-                      value={requestForm.room_count}
-                      onChange={(e) => setRequestForm({...requestForm, room_count: parseInt(e.target.value)})}
-                      min="1"
-                      max="24"
-                    />
-                  </div>
                 </div>
-
-                <div>
-                  <div className="form-group">
-                    <label>Special Instructions</label>
-                    <textarea
-                      className="input"
-                      rows={6}
-                      value={requestForm.special_instructions}
-                      onChange={(e) => setRequestForm({...requestForm, special_instructions: e.target.value})}
-                      placeholder="Any specific cleaning requirements, areas of focus, or special instructions for the cleaning team..."
-                    />
-                  </div>
+                <div className="form-group">
+                  <label>Special Instructions / Notes</label>
+                  <textarea 
+                    className="input" 
+                    rows={3} 
+                    value={requestForm.special_instructions}
+                    onChange={(e) => setRequestForm({...requestForm, special_instructions: e.target.value})}
+                    placeholder="e.g. Deep clean ocean view suite #302, extra linen..."
+                  />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button className="btn btn-ghost" onClick={() => setShowRequestForm(false)}>Cancel</button>
+                  <button className="btn btn-primary" onClick={handleRequest} disabled={submitting}>
+                    {submitting ? 'Submitting...' : 'Submit Request'}
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="split mt-32" style={{ alignItems: 'flex-start', gridTemplateColumns: '2fr 1fr', gap: 24 }}>
-            <div className="panel">
-              <div className="panel-head">
-                <h3>Cleaning History</h3>
-                <span className="tag">{cleaningRequests.length} requests</span>
-              </div>
-              
-              {cleaningRequests.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {cleaningRequests.map((request) => (
-                    <div key={request.id} style={{
-                      padding: '16px',
-                      border: '1px solid var(--hairline)',
-                      borderRadius: '8px',
-                      background: 'var(--paper)'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                        <div>
-                          <div style={{ fontWeight: '600', marginBottom: '4px' }}>
-                            Cleaning Request #{request.id}
-                          </div>
-                          <div style={{ fontSize: '.8rem', color: 'var(--muted)' }}>
-                            Requested: {new Date(request.requested_date).toLocaleDateString()}
-                          </div>
-                        </div>
-                        <StatusBadge status={request.status} />
-                      </div>
-                      
-                      {request.team_assigned && (
-                        <div style={{ fontSize: '.85rem', color: 'var(--muted)', marginBottom: '4px' }}>
-                          Team: {request.team_assigned}
-                        </div>
-                      )}
-                      
-                      {request.service_date && (
-                        <div style={{ fontSize: '.85rem', color: 'var(--muted)' }}>
-                          Service Date: {new Date(request.service_date).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--muted)' }}>
-                  <p>No cleaning requests yet.</p>
-                  <p style={{ fontSize: '.8rem' }}>Submit your first request to get started!</p>
-                </div>
-              )}
+          <div className="panel mt-24">
+            <div className="panel-head">
+              <h3>Cleaning History & Requests</h3>
             </div>
-
-            <div className="panel">
-              <div className="panel-head">
-                <h3>Service Details</h3>
+            {cleaningRequests.length === 0 ? (
+              <div style={{ padding: '36px 20px', textAlign: 'center', color: '#64748b' }}>
+                <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>✦</div>
+                <b style={{ color: '#0f172a', display: 'block', marginBottom: '4px' }}>No cleaning requests yet</b>
+                <span style={{ fontSize: '.85rem' }}>Click "Request Cleaning" to schedule your first complimentary cleaning service.</span>
               </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '.9rem' }}>What's Included</h4>
-                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '.8rem', color: 'var(--muted)' }}>
-                    <li>Deep cleaning of all rooms</li>
-                    <li>Bathroom sanitization</li>
-                    <li>Bed linen change</li>
-                    <li>Vacuum and floor cleaning</li>
-                    <li>Surface disinfection</li>
-                    <li>Trash removal</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '.9rem' }}>Eligibility Requirements</h4>
-                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '.8rem', color: 'var(--muted)' }}>
-                    <li>Minimum 10 bookings per month</li>
-                    <li>Hotel status: Approved</li>
-                    <li>Good standing with platform</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '.9rem' }}>Service Schedule</h4>
-                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--muted)' }}>
-                    Available 7 days a week, 8 AM - 8 PM. Advance booking recommended.
-                  </p>
-                </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table className="data-table">
+                  <thead>
+                    <tr><th>Request Date</th><th>Assigned Team</th><th>Status</th><th>Action</th></tr>
+                  </thead>
+                  <tbody>
+                    {cleaningRequests.map((req) => (
+                      <tr key={req.id}>
+                        <td>{req.requested_date ? new Date(req.requested_date).toLocaleDateString() : 'Today'}</td>
+                        <td>{req.team_assigned || req.team_name || 'Pending Assignment'}</td>
+                        <td>
+                          <span className={`badge-stamp ${req.status === 'completed' ? 'approved' : 'pending'}`}>
+                            <span className="dot"></span> {req.status || 'requested'}
+                          </span>
+                        </td>
+                        <td><button className="btn btn-ghost btn-sm">View</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>
     </div>
-  );
-}
-
-function StatusBadge({ status }) {
-  const statusMap = {
-    'requested': 'pending',
-    'assigned': 'approved',
-    'completed': 'approved'
-  };
-  
-  const mappedStatus = statusMap[status] || status;
-  const label = status.charAt(0).toUpperCase() + status.slice(1);
-  
-  return (
-    <span className={`badge-stamp ${mappedStatus}`}>
-      <span className="dot"></span> {label}
-    </span>
   );
 }

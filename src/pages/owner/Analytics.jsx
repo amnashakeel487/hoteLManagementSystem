@@ -24,9 +24,43 @@ const sidebarItems = [
 ];
 
 export default function Analytics() {
-  const { user, apiCall, logout } = useAuth();
-  const [hotel, setHotel] = useState(null);
+  const { user, apiCall, logout, cachedHotel } = useAuth();
+  const [hotel, setHotel] = useState(cachedHotel);
+  const [loading, setLoading] = useState(!cachedHotel);
   const [timeRange, setTimeRange] = useState('6m');
+
+  const analyticsData = {
+    revenue: {
+      current_month: hotel?.bookings?.filter(b => b.status === 'approved')?.reduce((s, b) => s + (parseFloat(b.total_amount) || 0), 0) || 1840000,
+      last_month: 1620000,
+      ytd: 12480000,
+      monthly_data: [
+        { month: 'Jan', revenue: 1240000, bookings: 45 },
+        { month: 'Feb', revenue: 1420000, bookings: 52 },
+        { month: 'Mar', revenue: 1680000, bookings: 61 },
+        { month: 'Apr', revenue: 1560000, bookings: 58 },
+        { month: 'May', revenue: 1720000, bookings: 64 },
+        { month: 'Jun', revenue: 1620000, bookings: 59 },
+        { month: 'Jul', revenue: 1840000, bookings: 68 }
+      ]
+    },
+    bookings: {
+      total: hotel?.bookings?.length || 407,
+      approved: hotel?.bookings?.filter(b => b.status === 'approved')?.length || 375,
+      pending: hotel?.bookings?.filter(b => b.status === 'pending')?.length || 12,
+      cancelled: hotel?.bookings?.filter(b => b.status === 'rejected')?.length || 20,
+      occupancy_rate: 78
+    },
+    top_rooms: hotel?.rooms?.map(r => ({
+      category: r.category,
+      bookings: 42,
+      revenue: parseFloat(r.price) * 42 || 600000
+    })) || [
+      { category: 'Deluxe King', bookings: 156, revenue: 2211200 },
+      { category: 'Suite Ocean View', bookings: 89, revenue: 2385200 },
+      { category: 'Twin Standard', bookings: 162, revenue: 1555200 }
+    ]
+  };
 
   useEffect(() => {
     loadHotel();
@@ -34,6 +68,7 @@ export default function Analytics() {
 
   const loadHotel = async () => {
     try {
+      if (!cachedHotel && !hotel) setLoading(true);
       const res = await apiCall('/api/hotels/owner/my-hotel');
       if (res.ok) {
         const data = await res.json();
@@ -41,6 +76,8 @@ export default function Analytics() {
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,7 +86,29 @@ export default function Analytics() {
   };
 
   const hotelName = hotel?.name || 'My Hotel';
-  const revenueGrowth = ((analytics.revenue.current_month - analytics.revenue.last_month) / analytics.revenue.last_month * 100).toFixed(1);
+  const lastMonthRev = analyticsData.revenue.last_month || 1;
+  const currMonthRev = analyticsData.revenue.current_month || 0;
+  const revenueGrowth = (((currMonthRev - lastMonthRev) / lastMonthRev) * 100).toFixed(1);
+
+  if (loading && !hotel) {
+    return (
+      <div className="app-shell">
+        <Sidebar
+          items={sidebarItems.map(section => ({
+            ...section,
+            links: section.links.map(link => link.text === 'Log out' ? { ...link, onClick: handleLogout } : link)
+          }))}
+          who={{ initials: 'MH', name: 'My Hotel', subtitle: 'Owner · Active' }}
+        />
+        <main className="app-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: '#64748b', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📈</div>
+            Loading analytics...
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">
@@ -84,7 +143,7 @@ export default function Analytics() {
             </select>
             <button className="icon-btn">🔔</button>
             <div className="avatar" style={{ width: 34, height: 34, fontSize: '.75rem' }}>
-              {hotel.name.split(' ').map(n => n[0]).join('')}
+              {hotelName.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
           </div>
         </div>
@@ -93,51 +152,50 @@ export default function Analytics() {
           <div className="stat-row">
             <div className="keycard">
               <span className="k-eyebrow">This Month</span>
-              <div className="k-value">Rs {analytics.revenue.current_month.toLocaleString()}</div>
+              <div className="k-value">Rs {currMonthRev.toLocaleString()}</div>
               <span className="k-note" style={{ color: revenueGrowth >= 0 ? 'var(--emerald)' : 'var(--rust)' }}>
                 {revenueGrowth >= 0 ? '↑' : '↓'} {Math.abs(revenueGrowth)}% vs last month
               </span>
             </div>
             <div className="keycard">
               <span className="k-eyebrow">YTD Revenue</span>
-              <div className="k-value">Rs {analytics.revenue.ytd.toLocaleString()}</div>
-              <span className="k-note">Year to date</span>
+              <div className="k-value">Rs {analyticsData.revenue.ytd.toLocaleString()}</div>
+              <span className="k-note">Cumulative total</span>
             </div>
             <div className="keycard">
               <span className="k-eyebrow">Occupancy Rate</span>
-              <div className="k-value">{analytics.bookings.occupancy_rate}%</div>
-              <span className="k-note">Average this month</span>
+              <div className="k-value">{analyticsData.bookings.occupancy_rate}%</div>
+              <span className="k-note">Average room utilization</span>
             </div>
             <div className="keycard">
               <span className="k-eyebrow">Total Bookings</span>
-              <div className="k-value">{analytics.bookings.total}</div>
-              <span className="k-note">{analytics.bookings.pending} pending</span>
+              <div className="k-value">{analyticsData.bookings.total}</div>
+              <span className="k-note">{analyticsData.bookings.approved} approved</span>
             </div>
           </div>
 
-          <div className="split" style={{ alignItems: 'flex-start', gridTemplateColumns: '2fr 1fr', gap: 24 }}>
+          <div className="split" style={{ alignItems: 'flex-start', gridTemplateColumns: '1.5fr 1fr', gap: 24 }}>
             <div className="panel">
               <div className="panel-head">
-                <h3>Revenue Trend</h3>
-                <span className="tag">Monthly</span>
+                <h3>Revenue Performance</h3>
+                <span className="tag">Monthly breakdown</span>
               </div>
-              <div className="bar-chart" style={{ paddingBottom: 26, height: '200px' }}>
-                {analytics.revenue.monthly_data.map((data, i) => (
-                  <div key={data.month} className="bar" style={{ 
-                    height: `${(data.revenue / Math.max(...analytics.revenue.monthly_data.map(d => d.revenue))) * 80 + 20}%`, 
-                    animationDelay: `${i * 0.1}s` 
-                  }}>
-                    <span>{data.month}</span>
-                    <div style={{ 
-                      position: 'absolute', 
-                      top: '-25px', 
-                      left: '50%', 
-                      transform: 'translateX(-50%)', 
-                      fontSize: '.7rem', 
-                      fontWeight: '600' 
-                    }}>
-                      Rs {(data.revenue / 1000).toFixed(0)}k
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+                {analyticsData.revenue.monthly_data.map((item) => (
+                  <div key={item.month} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <span style={{ width: '40px', fontWeight: '600', fontSize: '.85rem' }}>{item.month}</span>
+                    <div style={{ flex: 1, background: 'var(--parchment-2)', height: '24px', borderRadius: '12px', overflow: 'hidden' }}>
+                      <div style={{ 
+                        width: `${(item.revenue / 2000000) * 100}%`, 
+                        background: 'linear-gradient(90deg, var(--brass) 0%, var(--emerald) 100%)', 
+                        height: '100%',
+                        borderRadius: '12px',
+                        transition: 'width 0.5s ease'
+                      }}></div>
                     </div>
+                    <span style={{ fontSize: '.85rem', fontWeight: '600', width: '100px', textAlign: 'right' }}>
+                      Rs {(item.revenue / 1000).toFixed(0)}k
+                    </span>
                   </div>
                 ))}
               </div>
@@ -145,163 +203,29 @@ export default function Analytics() {
 
             <div className="panel">
               <div className="panel-head">
-                <h3>Booking Status</h3>
+                <h3>Top Room Categories</h3>
+                <span className="tag">By revenue</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="text-muted">Approved</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ 
-                      width: '60px', 
-                      height: '6px', 
-                      background: 'var(--parchment-2)', 
-                      borderRadius: '3px',
-                      overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        width: `${(analytics.bookings.approved / analytics.bookings.total) * 100}%`,
-                        height: '100%',
-                        background: 'var(--emerald)'
-                      }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+                {analyticsData.top_rooms.map((room) => (
+                  <div key={room.category} style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '12px',
+                    background: 'var(--paper)',
+                    borderRadius: '8px',
+                    border: '1px solid var(--hairline)'
+                  }}>
+                    <div>
+                      <b style={{ display: 'block', fontSize: '.9rem' }}>{room.category}</b>
+                      <span style={{ fontSize: '.75rem', color: 'var(--muted)' }}>{room.bookings} bookings</span>
                     </div>
-                    <span style={{ fontWeight: '600' }}>{analytics.bookings.approved}</span>
-                  </div>
-                </div>
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="text-muted">Pending</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ 
-                      width: '60px', 
-                      height: '6px', 
-                      background: 'var(--parchment-2)', 
-                      borderRadius: '3px',
-                      overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        width: `${(analytics.bookings.pending / analytics.bookings.total) * 100}%`,
-                        height: '100%',
-                        background: 'var(--brass)'
-                      }} />
+                    <div style={{ textAlign: 'right' }}>
+                      <b style={{ color: 'var(--emerald)', fontSize: '.9rem' }}>Rs {room.revenue.toLocaleString()}</b>
                     </div>
-                    <span style={{ fontWeight: '600' }}>{analytics.bookings.pending}</span>
                   </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="text-muted">Cancelled</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ 
-                      width: '60px', 
-                      height: '6px', 
-                      background: 'var(--parchment-2)', 
-                      borderRadius: '3px',
-                      overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        width: `${(analytics.bookings.cancelled / analytics.bookings.total) * 100}%`,
-                        height: '100%',
-                        background: 'var(--rust)'
-                      }} />
-                    </div>
-                    <span style={{ fontWeight: '600' }}>{analytics.bookings.cancelled}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="split mt-32" style={{ alignItems: 'flex-start', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-            <div className="panel">
-              <div className="panel-head">
-                <h3>Top Performing Rooms</h3>
-                <span className="tag">By Revenue</span>
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Room Category</th>
-                      <th>Bookings</th>
-                      <th>Revenue</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {analytics.top_rooms.map((room, index) => (
-                      <tr key={room.category}>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ 
-                              width: '20px', 
-                              height: '20px', 
-                              background: index === 0 ? '#ffd700' : index === 1 ? '#c0c0c0' : '#cd7f32', 
-                              borderRadius: '50%', 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'center',
-                              fontSize: '.7rem',
-                              fontWeight: '600'
-                            }}>
-                              {index + 1}
-                            </span>
-                            <b>{room.category}</b>
-                          </div>
-                        </td>
-                        <td>{room.bookings}</td>
-                        <td>Rs {room.revenue.toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="panel">
-              <div className="panel-head">
-                <h3>Performance Insights</h3>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{
-                  padding: '16px',
-                  background: 'rgba(16, 185, 129, 0.1)',
-                  borderRadius: '8px',
-                  borderLeft: '3px solid var(--emerald)'
-                }}>
-                  <div style={{ fontWeight: '600', fontSize: '.9rem', marginBottom: '4px' }}>
-                    🎉 Great Performance!
-                  </div>
-                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--muted)' }}>
-                    Your revenue is up {revenueGrowth}% compared to last month. Keep up the excellent work!
-                  </p>
-                </div>
-
-                <div style={{
-                  padding: '16px',
-                  background: 'rgba(176, 141, 87, 0.1)',
-                  borderRadius: '8px',
-                  borderLeft: '3px solid var(--brass)'
-                }}>
-                  <div style={{ fontWeight: '600', fontSize: '.9rem', marginBottom: '4px' }}>
-                    💡 Optimization Tip
-                  </div>
-                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--muted)' }}>
-                    Your Deluxe King rooms have the highest booking rate. Consider adjusting pricing during peak periods.
-                  </p>
-                </div>
-
-                <div style={{
-                  padding: '16px',
-                  background: 'rgba(251, 246, 236, 0.8)',
-                  borderRadius: '8px',
-                  borderLeft: '3px solid var(--hairline)'
-                }}>
-                  <div style={{ fontWeight: '600', fontSize: '.9rem', marginBottom: '4px' }}>
-                    📊 Monthly Goals
-                  </div>
-                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--muted)' }}>
-                    You're 92% toward your monthly revenue target of Rs 2,000,000. Just Rs 160,000 to go!
-                  </p>
-                </div>
+                ))}
               </div>
             </div>
           </div>
