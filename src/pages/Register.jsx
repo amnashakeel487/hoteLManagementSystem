@@ -74,7 +74,7 @@ export default function Register() {
         throw new Error(resData.error || 'Registration failed');
       }
       
-      navigate('/pending');
+      navigate('/pending', { state: { hotelName: form.hotelName, email: form.email } });
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {

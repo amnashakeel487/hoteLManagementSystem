@@ -1,6 +1,11 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function Pending() {
+  const location = useLocation();
+  const hotelName = location.state?.hotelName || '';
+  const email = location.state?.email || '';
+  const submittedTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
   return (
     <>
       <nav className="site-nav">
@@ -24,18 +29,23 @@ export default function Pending() {
                 Pending
               </span>
             </div>
-            <span className="eyebrow" style={{ justifyContent: 'center' }}>Request #REQ-2318</span>
-            <h1 className="mt-16" style={{ fontSize: '1.9rem' }}>The Marlow Hotel is now Pending Approval</h1>
+            <span className="eyebrow" style={{ justifyContent: 'center' }}>Registration Submitted Successfully</span>
+            <h1 className="mt-16" style={{ fontSize: '1.9rem' }}>
+              {hotelName
+                ? <>{hotelName} is now <span style={{ color: 'var(--brass-dark)' }}>Pending Approval</span></>
+                : <>Your hotel is now <span style={{ color: 'var(--brass-dark)' }}>Pending Approval</span></>
+              }
+            </h1>
             <p className="lede" style={{ margin: '16px auto 0', textAlign: 'center' }}>
-              Your request has been submitted. Our admin team reviews new hotels within 48 hours — you'll
-              get an email the moment there's a decision. Rooms and bookings stay locked until then.
+              Your registration has been submitted. Our admin team reviews new hotels within 48 hours — you'll
+              get an email{email ? ` at ${email}` : ''} the moment there's a decision. Rooms and bookings stay locked until then.
             </p>
 
             <div className="flow mt-32" style={{ textAlign: 'left' }}>
               <div className="flow-step">
                 <span className="fnum">01</span>
                 <h4>Submitted</h4>
-                <p>Received today at 10:42 AM.</p>
+                <p>Received today at {submittedTime}.</p>
               </div>
               <div className="flow-step">
                 <span className="fnum">02</span>
@@ -51,7 +61,7 @@ export default function Pending() {
 
             <div className="flex gap-12 mt-32" style={{ justifyContent: 'center' }}>
               <Link to="/" className="btn btn-ghost">Back to home</Link>
-              <Link to="/owner" className="btn btn-primary">Preview dashboard (locked view)</Link>
+              <Link to="/login" className="btn btn-primary">Log in as Owner →</Link>
             </div>
           </div>
         </div>

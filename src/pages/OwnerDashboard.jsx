@@ -179,6 +179,93 @@ export default function OwnerDashboard() {
     );
   }
 
+  // ── STATUS GATE: Block access if hotel is not approved/active ──────────────
+  if (hotel && hotel.status !== 'approved' && hotel.status !== 'active') {
+    const isPending = hotel.status === 'pending';
+    const isRejected = hotel.status === 'rejected';
+    const isSuspended = hotel.status === 'suspended';
+
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--parchment)', display: 'flex', flexDirection: 'column' }}>
+        {/* Minimal nav */}
+        <nav className="site-nav">
+          <div className="container">
+            <Link to="/" className="brand"><span className="mark"></span> Stayfolio</Link>
+            <div className="nav-cta">
+              <button onClick={handleLogout} className="btn btn-ghost btn-sm">Log out</button>
+            </div>
+          </div>
+        </nav>
+
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 24px' }}>
+          <div className="panel" style={{ maxWidth: '600px', width: '100%', textAlign: 'center', padding: '56px 44px' }}>
+            {/* Status icon */}
+            <div style={{ width: '70px', height: '70px', margin: '0 auto 26px', borderRadius: '50%', background: 'var(--parchment-2)', display: 'grid', placeItems: 'center' }}>
+              <span
+                className={`stamp ${hotel.status}`}
+                style={{ position: 'static', opacity: 1, animation: 'none', transform: 'rotate(-8deg)', borderWidth: '2.5px', padding: '6px 10px', fontSize: '.6rem' }}
+              >
+                {hotel.status}
+              </span>
+            </div>
+
+            <span className="eyebrow" style={{ justifyContent: 'center' }}>
+              {isPending ? 'Under Review' : isRejected ? 'Registration Rejected' : 'Account Suspended'}
+            </span>
+            <h1 className="mt-16" style={{ fontSize: '1.8rem' }}>
+              {hotel.name || 'Your Hotel'} — <span style={{ color: isPending ? 'var(--brass-dark)' : 'var(--rust)' }}>
+                {isPending ? 'Pending Approval' : isRejected ? 'Rejected' : 'Suspended'}
+              </span>
+            </h1>
+
+            <p className="lede" style={{ margin: '16px auto 0' }}>
+              {isPending && 'Your hotel registration is currently under review by our admin team. Rooms, bookings, and dashboard features will unlock the moment your hotel is approved. This usually takes up to 48 hours.'}
+              {isRejected && `Your hotel registration was reviewed and rejected. ${hotel.rejection_reason ? `Reason: "${hotel.rejection_reason}"` : 'Please check your email for details.'} You can contact support or register again with corrected information.`}
+              {isSuspended && 'Your hotel has been temporarily suspended by the platform administrator. Please contact support for more information.'}
+            </p>
+
+            {/* Status timeline for pending */}
+            {isPending && (
+              <div className="flow mt-32" style={{ textAlign: 'left' }}>
+                <div className="flow-step">
+                  <span className="fnum">01</span>
+                  <h4>Submitted</h4>
+                  <p>Your registration has been received.</p>
+                </div>
+                <div className="flow-step">
+                  <span className="fnum">02</span>
+                  <h4 style={{ color: 'var(--brass-dark)' }}>In review</h4>
+                  <p>Admin is checking your documents now.</p>
+                </div>
+                <div className="flow-step" style={{ opacity: 0.5 }}>
+                  <span className="fnum">03</span>
+                  <h4>Decision</h4>
+                  <p>Approved, or returned with a reason to fix.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Rejection details */}
+            {isRejected && hotel.rejection_reason && (
+              <div style={{ background: 'rgba(166, 61, 64, 0.06)', border: '1px solid rgba(166, 61, 64, 0.2)', borderRadius: '8px', padding: '16px 20px', marginTop: '24px', textAlign: 'left' }}>
+                <b style={{ color: 'var(--rust)', display: 'block', marginBottom: '6px' }}>Rejection Reason:</b>
+                <p style={{ margin: 0, fontSize: '.9rem' }}>{hotel.rejection_reason}</p>
+              </div>
+            )}
+
+            <div className="flex gap-12 mt-32" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link to="/" className="btn btn-ghost">Back to home</Link>
+              {isRejected && (
+                <Link to="/register" className="btn btn-brass">Re-register Hotel</Link>
+              )}
+              <button onClick={handleLogout} className="btn btn-ghost" style={{ borderColor: 'var(--rust)', color: 'var(--rust)' }}>Log out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Calculate metrics from live data
   const pendingBookings = bookings.filter(b => b.status === 'pending').length;
   const currentMonthBookings = bookings.length;
