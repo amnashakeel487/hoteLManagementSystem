@@ -60,9 +60,16 @@ def register_hotel():
                 if file_path:
                     file_paths[db_field] = file_path
     
-    # Check if a user with this email already exists and link them
-    existing_user = User.query.filter_by(email=data['email']).first()
-    owner_id = existing_user.id if existing_user else None
+    # Check if a user with this email already exists, or create one for the applicant
+    existing_user = User.query.filter_by(email=data['email']).lower().first() if hasattr(User.query.filter_by(email=data['email']), 'lower') else User.query.filter_by(email=data['email'].strip().lower()).first()
+    if not existing_user:
+        import secrets
+        existing_user = User(email=data['email'].strip().lower(), role='hotel_owner')
+        existing_user.set_password(secrets.token_urlsafe(12))
+        db.session.add(existing_user)
+        db.session.flush()
+    
+    owner_id = existing_user.id
     
     # Create hotel record
     try:

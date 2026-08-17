@@ -10,6 +10,15 @@ app = create_app(config_name)
 with app.app_context():
     try:
         db.create_all()
+        # Drop NOT NULL constraint on owner_id in PostgreSQL if it was created previously
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(db.text("ALTER TABLE hotel ALTER COLUMN owner_id DROP NOT NULL;"))
+                conn.commit()
+                print("✅ Set hotel.owner_id to nullable in database.")
+        except Exception as alter_err:
+            pass
+
         if not User.query.first():
             print("🌱 Empty database detected - auto seeding initial data...")
             seed_production_data()
