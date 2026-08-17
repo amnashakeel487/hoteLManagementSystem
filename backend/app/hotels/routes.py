@@ -498,6 +498,29 @@ def get_hotel_bookings(user, hotel):
         'current_page': page
     }
 
+@hotels_bp.route('/<int:hotel_id>/bookings/<int:booking_id>', methods=['PATCH'])
+@jwt_required()
+@hotel_owner_required
+def update_booking_status(user, hotel, booking_id):
+    """Approve or reject a booking for this hotel"""
+    from app.models import Booking
+    booking = Booking.query.filter_by(id=booking_id, hotel_id=hotel.id).first()
+    if not booking:
+        return {'error': 'Booking not found'}, 404
+
+    data = request.get_json() or {}
+    new_status = data.get('status')
+    if new_status not in ['approved', 'rejected', 'pending']:
+        return {'error': 'Invalid status. Must be approved, rejected, or pending'}, 400
+
+    booking.status = new_status
+    db.session.commit()
+
+    return {
+        'message': f'Booking status updated to {new_status}',
+        'booking': booking.to_dict()
+    }
+
 @hotels_bp.route('/<int:hotel_id>/reviews', methods=['GET'])
 @jwt_required()
 @hotel_owner_required

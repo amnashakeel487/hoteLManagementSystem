@@ -135,6 +135,40 @@ export default function CleaningTeams() {
     );
   };
 
+  const [showAddTeam, setShowAddTeam] = useState(false);
+  const [newTeam, setNewTeam] = useState({
+    name: '',
+    leader: '',
+    members: 4,
+    current_location: 'Available',
+    specialties: 'Deep Cleaning, Turnover'
+  });
+
+  const handleAddTeam = (e) => {
+    e.preventDefault();
+    if (!newTeam.name || !newTeam.leader) return;
+    const teamObj = {
+      id: Date.now(),
+      name: newTeam.name,
+      leader: newTeam.leader,
+      members: parseInt(newTeam.members) || 2,
+      status: 'available',
+      current_location: newTeam.current_location || 'Available',
+      specialties: newTeam.specialties.split(',').map(s => s.trim()).filter(Boolean),
+      rating: 5.0,
+      completed_jobs: 0
+    };
+    setTeams(prev => [...prev, teamObj]);
+    setShowAddTeam(false);
+    setNewTeam({
+      name: '',
+      leader: '',
+      members: 4,
+      current_location: 'Available',
+      specialties: 'Deep Cleaning, Turnover'
+    });
+  };
+
   const handleLogout = () => {
     logout();
   };
@@ -282,7 +316,12 @@ export default function CleaningTeams() {
             <div className="panel">
               <div className="panel-head">
                 <h3>Cleaning Teams</h3>
-                <button className="btn btn-brass btn-sm">+ Add Team</button>
+                <button 
+                  className="btn btn-brass btn-sm"
+                  onClick={() => setShowAddTeam(true)}
+                >
+                  + Add Team
+                </button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {teams.map((team) => (
@@ -337,6 +376,126 @@ export default function CleaningTeams() {
           </div>
         </div>
       </main>
+
+      {/* Add Team Modal */}
+      {showAddTeam && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            maxWidth: '520px',
+            width: '100%',
+            padding: '28px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.2)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.3rem' }}>Register Cleaning Team</h3>
+              <button 
+                type="button" 
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowAddTeam(false)}
+                style={{ fontSize: '1.2rem', padding: '2px 8px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddTeam}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, marginBottom: '6px' }}>
+                  Team Name *
+                </label>
+                <input 
+                  type="text" 
+                  className="input" 
+                  required
+                  placeholder="e.g. Team Delta"
+                  value={newTeam.name}
+                  onChange={(e) => setNewTeam({ ...newTeam, name: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, marginBottom: '6px' }}>
+                    Team Leader *
+                  </label>
+                  <input 
+                    type="text" 
+                    className="input" 
+                    required
+                    placeholder="e.g. Alex Rivera"
+                    value={newTeam.leader}
+                    onChange={(e) => setNewTeam({ ...newTeam, leader: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, marginBottom: '6px' }}>
+                    Number of Members
+                  </label>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    max="20"
+                    className="input" 
+                    value={newTeam.members}
+                    onChange={(e) => setNewTeam({ ...newTeam, members: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, marginBottom: '6px' }}>
+                  Base Location / City
+                </label>
+                <input 
+                  type="text" 
+                  className="input" 
+                  placeholder="e.g. Lahore, PK"
+                  value={newTeam.current_location}
+                  onChange={(e) => setNewTeam({ ...newTeam, current_location: e.target.value })}
+                />
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, marginBottom: '6px' }}>
+                  Specialties (comma-separated)
+                </label>
+                <input 
+                  type="text" 
+                  className="input" 
+                  placeholder="Deep Cleaning, Fast Turnover, Sanitization"
+                  value={newTeam.specialties}
+                  onChange={(e) => setNewTeam({ ...newTeam, specialties: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setShowAddTeam(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary btn-sm">
+                  Add Cleaning Team
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

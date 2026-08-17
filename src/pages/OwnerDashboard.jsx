@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Sidebar from '../components/Sidebar';
 
@@ -39,6 +40,8 @@ export default function OwnerDashboard() {
   const [newRoom, setNewRoom] = useState(BLANK_ROOM);
   const [savingRoom, setSavingRoom] = useState(false);
   const [roomError, setRoomError] = useState('');
+  const [replyingReviewId, setReplyingReviewId] = useState(null);
+  const [replyText, setReplyText] = useState('');
 
   useEffect(() => { loadDashboard(); }, []);
 
@@ -50,8 +53,23 @@ export default function OwnerDashboard() {
         const data = await res.json();
         setHotel(data.hotel);
         setRooms(data.hotel.rooms || []);
+
+        if (data.hotel?.id) {
+          // Fetch real bookings
+          const bRes = await apiCall(`/api/hotels/${data.hotel.id}/bookings`);
+          if (bRes.ok) {
+            const bData = await bRes.json();
+            setBookings(bData.bookings || []);
+          }
+
+          // Fetch reviews
+          const rRes = await apiCall(`/api/hotels/${data.hotel.id}/reviews`);
+          if (rRes.ok) {
+            const rData = await rRes.json();
+            setReviews(rData.reviews || []);
+          }
+        }
       }
-      // bookings, reviews, analytics can be added later
     } catch (err) {
       console.error(err);
     } finally {
@@ -107,17 +125,20 @@ export default function OwnerDashboard() {
 
   const setBookingStatus = async (bookingId, status) => {
     try {
-      const res = await apiCall(`/api/bookings/${bookingId}`, {
+      if (!hotel?.id) return;
+      const res = await apiCall(`/api/hotels/${hotel.id}/bookings/${bookingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
 
       if (res.ok) {
-        // Update booking status in local state
         setBookings(bookings.map(booking => 
           booking.id === bookingId ? { ...booking, status } : booking
         ));
+      } else {
+        const d = await res.json();
+        alert('Failed to update booking: ' + (d.error || 'Unknown error'));
       }
     } catch (err) {
       console.error('Error updating booking status:', err);
@@ -287,7 +308,7 @@ export default function OwnerDashboard() {
                 <span className="flex items-center gap-8"><span style={{ width: 10, height: 10, borderRadius: 3, background: 'var(--brass)', display: 'inline-block' }}></span> On hold</span>
                 <span className="flex items-center gap-8"><span style={{ width: 10, height: 10, borderRadius: 3, background: 'var(--parchment-2)', display: 'inline-block' }}></span> Open</span>
               </div>
-              <a href="#" className="btn btn-ghost btn-sm btn-block mt-24">Open full calendar</a>
+              <Link to="/owner/bookings" className="btn btn-ghost btn-sm btn-block mt-24">Open full calendar →</Link>
             </div>
           </div>
 
@@ -309,27 +330,31 @@ export default function OwnerDashboard() {
             <div className="panel">
               <div className="panel-head">
                 <h3>Recent reviews</h3>
-                <span className="tag">{averageRating} avg</span>
+                <Link to="/owner/reviews" style={{ fontSize: '.8rem', color: 'var(--brass-dark)', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
               </div>
-              {reviews.slice(0, 2).map((review) => (
-                <div key={review.id} className="review-item">
-                  <div className="avatar" style={{ background: 'var(--emerald)', color: '#fff' }}>
-                    {review.guest_name.split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <div>
-                    <div className="flex justify-between" style={{ width: '100%' }}>
-                      <b style={{ fontSize: '.88rem' }}>{review.guest_name}</b>
-                      <span className="stars">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+              {reviews.length === 0 ? (
+                <div style={{ padding: '24px', textAlign: 'center', color: '#94a3b8', fontSize: '.88rem' }}>No reviews received yet.</div>
+              ) : (
+                reviews.slice(0, 2).map((review) => (
+                  <div key={review.id} className="review-item">
+                    <div className="avatar" style={{ background: 'var(--emerald)', color: '#fff' }}>
+                      {review.guest_name?.split(' ').map(n => n[0]).join('') || 'G'}
                     </div>
-                    <p className="text-muted mt-8" style={{ fontSize: '.85rem', margin: '6px 0 0' }}>
-                      "{review.comment}"
-                    </p>
-                    {!review.owner_reply && (
-                      <a href="#" style={{ fontSize: '.78rem', fontWeight: 600, color: 'var(--brass-dark)', display: 'inline-block', marginTop: 8 }}>Reply →</a>
-                    )}
+                    <div>
+                      <div className="flex justify-between" style={{ width: '100%' }}>
+                        <b style={{ fontSize: '.88rem' }}>{review.guest_name}</b>
+                        <span className="stars">{'★'.repeat(review.rating || 5)}{'☆'.repeat(5 - (review.rating || 5))}</span>
+                      </div>
+                      <p className="text-muted mt-8" style={{ fontSize: '.85rem', margin: '6px 0 0' }}>
+                        "{review.comment}"
+                      </p>
+                      {!review.owner_reply && (
+                        <Link to="/owner/reviews" style={{ fontSize: '.78rem', fontWeight: 600, color: 'var(--brass-dark)', display: 'inline-block', marginTop: 8 }}>Reply →</Link>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 

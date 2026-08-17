@@ -58,6 +58,41 @@ export default function AllHotels() {
     logout();
   };
 
+  const handleSuspend = async (hotelId) => {
+    if (!window.confirm('Are you sure you want to suspend this hotel?')) return;
+    try {
+      const res = await apiCall(`/api/admin/hotels/${hotelId}/suspend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: 'Suspended by platform administrator' })
+      });
+      if (res.ok) {
+        setHotels(prev => prev.map(h => h.id === hotelId ? { ...h, status: 'suspended' } : h));
+      } else {
+        const errData = await res.json();
+        alert('Failed to suspend: ' + (errData.error || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Error suspending hotel: ' + err.message);
+    }
+  };
+
+  const handleReactivate = async (hotelId) => {
+    try {
+      const res = await apiCall(`/api/admin/hotels/${hotelId}/reactivate`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        setHotels(prev => prev.map(h => h.id === hotelId ? { ...h, status: 'approved' } : h));
+      } else {
+        const errData = await res.json();
+        alert('Failed to reactivate: ' + (errData.error || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Error reactivating hotel: ' + err.message);
+    }
+  };
+
   const filteredHotels = hotels.filter(hotel => {
     const name = (hotel.name || '').toLowerCase();
     const city = (hotel.city || '').toLowerCase();
@@ -225,10 +260,22 @@ export default function AllHotels() {
                         <div className="table-actions">
                           <Link to={`/hotel/${hotel.id}`} target="_blank" title="View public page">👁</Link>
                           {hotel.status === 'approved' && (
-                            <button title="Suspend Hotel" style={{ color: 'var(--rust)' }}>⏸</button>
+                            <button 
+                              title="Suspend Hotel" 
+                              style={{ color: 'var(--rust)', cursor: 'pointer' }}
+                              onClick={() => handleSuspend(hotel.id)}
+                            >
+                              ⏸
+                            </button>
                           )}
                           {hotel.status === 'suspended' && (
-                            <button title="Reactivate Hotel" style={{ color: 'var(--emerald)' }}>↻</button>
+                            <button 
+                              title="Reactivate Hotel" 
+                              style={{ color: 'var(--emerald)', cursor: 'pointer' }}
+                              onClick={() => handleReactivate(hotel.id)}
+                            >
+                              ↻
+                            </button>
                           )}
                         </div>
                       </td>

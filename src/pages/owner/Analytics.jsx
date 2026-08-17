@@ -24,44 +24,31 @@ const sidebarItems = [
 ];
 
 export default function Analytics() {
-  const { user, logout } = useAuth();
-  const [analytics, setAnalytics] = useState({
-    revenue: {
-      current_month: 1840000,
-      last_month: 1620000,
-      ytd: 12480000,
-      monthly_data: [
-        { month: 'Jan', revenue: 1240000, bookings: 45 },
-        { month: 'Feb', revenue: 1420000, bookings: 52 },
-        { month: 'Mar', revenue: 1680000, bookings: 61 },
-        { month: 'Apr', revenue: 1560000, bookings: 58 },
-        { month: 'May', revenue: 1720000, bookings: 64 },
-        { month: 'Jun', revenue: 1620000, bookings: 59 },
-        { month: 'Jul', revenue: 1840000, bookings: 68 }
-      ]
-    },
-    bookings: {
-      total: 407,
-      approved: 375,
-      pending: 12,
-      cancelled: 20,
-      occupancy_rate: 78
-    },
-    top_rooms: [
-      { category: 'Deluxe King', bookings: 156, revenue: 2211200 },
-      { category: 'Suite Ocean View', bookings: 89, revenue: 2385200 },
-      { category: 'Twin Standard', bookings: 162, revenue: 1555200 }
-    ]
-  });
-
+  const { user, apiCall, logout } = useAuth();
+  const [hotel, setHotel] = useState(null);
   const [timeRange, setTimeRange] = useState('6m');
+
+  useEffect(() => {
+    loadHotel();
+  }, []);
+
+  const loadHotel = async () => {
+    try {
+      const res = await apiCall('/api/hotels/owner/my-hotel');
+      if (res.ok) {
+        const data = await res.json();
+        setHotel(data.hotel);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleLogout = () => {
     logout();
   };
 
-  const hotel = { name: 'The Marlow Hotel', status: 'approved' };
-
+  const hotelName = hotel?.name || 'My Hotel';
   const revenueGrowth = ((analytics.revenue.current_month - analytics.revenue.last_month) / analytics.revenue.last_month * 100).toFixed(1);
 
   return (
@@ -74,9 +61,9 @@ export default function Analytics() {
           )
         }))}
         who={{ 
-          initials: hotel.name.split(' ').map(n => n[0]).join(''), 
-          name: hotel.name, 
-          subtitle: `Owner · ${hotel.status}` 
+          initials: hotelName.split(' ').map(n => n[0]).join('').slice(0, 2), 
+          name: hotelName, 
+          subtitle: `Owner · ${hotel?.status || 'Active'}` 
         }}
       />
 

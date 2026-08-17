@@ -24,29 +24,63 @@ const sidebarItems = [
 ];
 
 export default function BookingsCalendar() {
-  const { user, logout } = useAuth();
-  const [bookings, setBookings] = useState([
-    { id: 1, guest_name: 'Hana Kobayashi', guest_email: 'hana@email.com', room_category: 'Deluxe King', check_in: '2026-08-20', check_out: '2026-08-23', status: 'pending', total_amount: 42600 },
-    { id: 2, guest_name: 'Marco Rossi', guest_email: 'marco@email.com', room_category: 'Twin Standard', check_in: '2026-08-22', check_out: '2026-08-24', status: 'pending', total_amount: 19200 },
-    { id: 3, guest_name: 'Sarah Johnson', guest_email: 'sarah@email.com', room_category: 'Suite Ocean View', check_in: '2026-08-18', check_out: '2026-08-21', status: 'approved', total_amount: 80400 },
-    { id: 4, guest_name: 'Ahmed Hassan', guest_email: 'ahmed@email.com', room_category: 'Deluxe King', check_in: '2026-08-25', check_out: '2026-08-28', status: 'approved', total_amount: 42600 }
-  ]);
-
+  const { user, apiCall, logout } = useAuth();
+  const [hotel, setHotel] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
 
-  const setBookingStatus = (bookingId, status) => {
-    setBookings(bookings.map(booking => 
-      booking.id === bookingId ? { ...booking, status } : booking
-    ));
+  useEffect(() => {
+    loadBookingsData();
+  }, []);
+
+  const loadBookingsData = async () => {
+    try {
+      setLoading(true);
+      const hRes = await apiCall('/api/hotels/owner/my-hotel');
+      if (hRes.ok) {
+        const hData = await hRes.json();
+        setHotel(hData.hotel);
+        if (hData.hotel?.id) {
+          const bRes = await apiCall(`/api/hotels/${hData.hotel.id}/bookings`);
+          if (bRes.ok) {
+            const bData = await bRes.json();
+            setBookings(bData.bookings || []);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error loading bookings:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setBookingStatus = async (bookingId, status) => {
+    try {
+      if (!hotel?.id) return;
+      const res = await apiCall(`/api/hotels/${hotel.id}/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+
+      if (res.ok) {
+        setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b));
+      } else {
+        const d = await res.json();
+        alert('Failed: ' + (d.error || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Error updating booking status:', err);
+    }
   };
 
   const handleLogout = () => {
     logout();
   };
 
-  const hotel = { name: 'The Marlow Hotel', status: 'approved' };
-  
   const filteredBookings = bookings.filter(booking => {
     if (filter === 'all') return true;
     return booking.status === filter;
@@ -58,11 +92,15 @@ export default function BookingsCalendar() {
     rejected: bookings.filter(b => b.status === 'rejected').length
   };
 
-  // Generate calendar grid (simplified)
+  const year = currentMonthDate.getFullYear();
+  const month = currentMonthDate.getMonth();
+  const monthName = currentMonthDate.toLocaleString('default', { month: 'long' });
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
   const generateCalendar = () => {
     const days = [];
-    for (let i = 1; i <= 30; i++) {
-      const dateStr = `2026-08-${i.toString().padStart(2, '0')}`;
+    for (let i = 1; i <= daysInMonth; i++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       const dayBookings = bookings.filter(b => 
         dateStr >= b.check_in && dateStr < b.check_out && b.status === 'approved'
       );
@@ -186,10 +224,20 @@ export default function BookingsCalendar() {
 
             <div className="panel">
               <div className="panel-head">
-                <h3>August 2026</h3>
+                <h3>{monthName} {year}</h3>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="btn btn-ghost btn-sm">‹</button>
-                  <button className="btn btn-ghost btn-sm">›</button>
+                  <button 
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setCurrentMonthDate(new Date(year, month - 1, 1))}
+                  >
+                    ‹
+                  </button>
+                  <button 
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setCurrentMonthDate(new Date(year, month + 1, 1))}
+                  >
+                    ›
+                  </button>
                 </div>
               </div>
               <div style={{ 

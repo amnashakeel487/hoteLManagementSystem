@@ -24,21 +24,44 @@ const sidebarItems = [
 ];
 
 export default function Reviews() {
-  const { user, logout } = useAuth();
-  const [reviews, setReviews] = useState([
-    { id: 1, guest_name: 'Hana Kobayashi', rating: 5, comment: 'Amazing stay! The room was beautiful and the staff was incredibly friendly. Perfect location for exploring the city.', owner_reply: '', created_at: '2026-08-15T10:30:00Z' },
-    { id: 2, guest_name: 'Marco Rossi', rating: 4, comment: 'Great service and excellent breakfast. The room was clean and comfortable. Would definitely stay again!', owner_reply: 'Thank you Marco! We look forward to welcoming you back.', created_at: '2026-08-12T14:20:00Z' },
-    { id: 3, guest_name: 'Sarah Johnson', rating: 5, comment: 'Outstanding hotel! The ocean view suite was spectacular. Every detail was perfect.', owner_reply: '', created_at: '2026-08-10T09:15:00Z' },
-    { id: 4, guest_name: 'Ahmed Hassan', rating: 3, comment: 'Good hotel overall but the wifi was slow in my room. The location is excellent though.', owner_reply: 'Thank you for the feedback Ahmed. We have upgraded our wifi system since your stay.', created_at: '2026-08-08T16:45:00Z' }
-  ]);
-
+  const { user, apiCall, logout } = useAuth();
+  const [hotel, setHotel] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
 
+  useEffect(() => {
+    loadReviewsData();
+  }, []);
+
+  const loadReviewsData = async () => {
+    try {
+      setLoading(true);
+      const hRes = await apiCall('/api/hotels/owner/my-hotel');
+      if (hRes.ok) {
+        const hData = await hRes.json();
+        setHotel(hData.hotel);
+        if (hData.hotel?.id) {
+          const rRes = await apiCall(`/api/hotels/${hData.hotel.id}/reviews`);
+          if (rRes.ok) {
+            const rData = await rRes.json();
+            setReviews(rData.reviews || []);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error loading reviews:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleReply = (reviewId) => {
+    if (!replyText.trim()) return;
     setReviews(reviews.map(review => 
       review.id === reviewId 
-        ? { ...review, owner_reply: replyText }
+        ? { ...review, owner_reply: replyText.trim() }
         : review
     ));
     setReplyingTo(null);
@@ -49,16 +72,28 @@ export default function Reviews() {
     logout();
   };
 
-  const hotel = { name: 'The Marlow Hotel', status: 'approved' };
-  
-  const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
+  const averageRating = reviews.length > 0 
+    ? (reviews.reduce((sum, review) => sum + (review.rating || 5), 0) / reviews.length)
+    : 5.0;
+
   const ratingDistribution = {
-    5: reviews.filter(r => r.rating === 5).length,
+    5: reviews.filter(r => (r.rating || 5) === 5).length,
     4: reviews.filter(r => r.rating === 4).length,
     3: reviews.filter(r => r.rating === 3).length,
     2: reviews.filter(r => r.rating === 2).length,
     1: reviews.filter(r => r.rating === 1).length,
   };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '12px', color: '#64748b' }}>
+        <div style={{ fontSize: '1.5rem' }}>★</div>
+        Loading reviews...
+      </div>
+    );
+  }
+
+  const hotelName = hotel?.name || 'My Hotel';
 
   return (
     <div className="app-shell">
@@ -70,9 +105,9 @@ export default function Reviews() {
           )
         }))}
         who={{ 
-          initials: hotel.name.split(' ').map(n => n[0]).join(''), 
-          name: hotel.name, 
-          subtitle: `Owner · ${hotel.status}` 
+          initials: hotelName.split(' ').map(n => n[0]).join('').slice(0, 2), 
+          name: hotelName, 
+          subtitle: `Owner · ${hotel?.status || 'Active'}` 
         }}
       />
 
@@ -82,7 +117,7 @@ export default function Reviews() {
           <div className="topbar-actions">
             <button className="icon-btn">🔔</button>
             <div className="avatar" style={{ width: 34, height: 34, fontSize: '.75rem' }}>
-              {hotel.name.split(' ').map(n => n[0]).join('')}
+              {hotelName.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
           </div>
         </div>

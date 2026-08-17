@@ -24,67 +24,107 @@ const sidebarItems = [
 ];
 
 export default function HotelProfile() {
-  const { user, logout } = useAuth();
-  const [hotel, setHotel] = useState({
-    id: 1,
-    name: 'The Marlow Hotel',
-    business_name: 'Marlow Hospitality Ltd',
-    email: 'info@marlowhotel.com',
-    phone: '+92 300 1234567',
-    address: '123 Main Street, Gulberg',
-    city: 'Lahore',
-    country: 'Pakistan',
-    description: 'A luxury boutique hotel in the heart of Lahore, offering personalized service and elegant accommodations.',
-    category: '5-Star',
-    room_count: 24,
-    latitude: 31.5497,
-    longitude: 74.3436,
-    status: 'approved'
-  });
-  
-  const [gallery, setGallery] = useState([
-    { id: 1, url: '/api/placeholder/400/300', alt: 'Hotel Exterior' },
-    { id: 2, url: '/api/placeholder/400/300', alt: 'Lobby' },
-    { id: 3, url: '/api/placeholder/400/300', alt: 'Restaurant' },
-    { id: 4, url: '/api/placeholder/400/300', alt: 'Pool Area' }
-  ]);
-
+  const { user, apiCall, logout } = useAuth();
+  const [hotel, setHotel] = useState(null);
+  const [formData, setFormData] = useState({});
+  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [gallery, setGallery] = useState([
+    { id: 1, title: 'Hotel Exterior' },
+    { id: 2, title: 'Lobby & Reception' },
+    { id: 3, title: 'Restaurant & Dining' },
+    { id: 4, title: 'Suites & Rooms' }
+  ]);
+
+  useEffect(() => {
+    loadHotelProfile();
+  }, []);
+
+  const loadHotelProfile = async () => {
+    try {
+      setLoading(true);
+      const res = await apiCall('/api/hotels/owner/my-hotel');
+      if (res.ok) {
+        const data = await res.json();
+        setHotel(data.hotel);
+        setFormData(data.hotel || {});
+      }
+    } catch (err) {
+      console.error('Error loading hotel profile:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSave = async () => {
+    if (!hotel?.id) return;
     setSaving(true);
+    setSaveError('');
+    setSaveSuccess(false);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setEditing(false);
+      const res = await apiCall(`/api/hotels/${hotel.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          business_name: formData.business_name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          country: formData.country,
+          description: formData.description,
+          category: formData.category,
+          room_count: parseInt(formData.room_count) || 1
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setHotel(data.hotel);
+        setFormData(data.hotel);
+        setEditing(false);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        const errData = await res.json();
+        setSaveError(errData.error || 'Failed to save changes');
+      }
     } catch (error) {
-      console.error('Error saving hotel profile:', error);
+      setSaveError(error.message || 'Network error');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleImageUpload = (e) => {
+  const handleAddPhoto = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Simulate upload
-      const newImage = {
-        id: gallery.length + 1,
-        url: URL.createObjectURL(file),
-        alt: file.name
-      };
-      setGallery([...gallery, newImage]);
+      setGallery(prev => [...prev, { id: Date.now(), title: file.name.replace(/\.[^/.]+$/, "") }]);
     }
   };
 
-  const removeImage = (imageId) => {
-    setGallery(gallery.filter(img => img.id !== imageId));
+  const removePhoto = (id) => {
+    setGallery(prev => prev.filter(item => item.id !== id));
   };
 
   const handleLogout = () => {
     logout();
   };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '12px', color: '#64748b' }}>
+        <div style={{ fontSize: '1.5rem' }}>🏨</div>
+        Loading hotel profile...
+      </div>
+    );
+  }
+
+  const hotelName = hotel?.name || 'Hotel Profile';
 
   return (
     <div className="app-shell">
@@ -96,9 +136,9 @@ export default function HotelProfile() {
           )
         }))}
         who={{ 
-          initials: hotel.name.split(' ').map(n => n[0]).join(''), 
-          name: hotel.name, 
-          subtitle: `Owner · ${hotel.status}` 
+          initials: hotelName.split(' ').map(n => n[0]).join('').slice(0, 2), 
+          name: hotelName, 
+          subtitle: `Owner · ${hotel?.status || 'Active'}` 
         }}
       />
 
@@ -106,11 +146,16 @@ export default function HotelProfile() {
         <div className="app-topbar">
           <h1>Hotel Profile</h1>
           <div className="topbar-actions">
+            {saveSuccess && (
+              <span style={{ fontSize: '.85rem', color: 'var(--emerald)', fontWeight: 600 }}>
+                ✓ Profile updated!
+              </span>
+            )}
             {editing ? (
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button 
                   className="btn btn-ghost btn-sm"
-                  onClick={() => setEditing(false)}
+                  onClick={() => { setEditing(false); setFormData(hotel || {}); }}
                   disabled={saving}
                 >
                   Cancel
@@ -133,18 +178,24 @@ export default function HotelProfile() {
             )}
             <button className="icon-btn">🔔</button>
             <div className="avatar" style={{ width: 34, height: 34, fontSize: '.75rem' }}>
-              {hotel.name.split(' ').map(n => n[0]).join('')}
+              {hotelName.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
           </div>
         </div>
 
         <div className="app-body">
-          <div className="split" style={{ alignItems: 'flex-start', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+          {saveError && (
+            <div style={{ background: '#fff1f2', color: '#dc2626', border: '1px solid #fca5a5', padding: '12px 18px', borderRadius: '8px', marginBottom: '20px', fontSize: '.9rem' }}>
+              ⚠️ {saveError}
+            </div>
+          )}
+
+          <div className="split" style={{ alignItems: 'flex-start', gridTemplateColumns: '1.2fr 1fr', gap: 24 }}>
             <div className="panel">
               <div className="panel-head">
                 <h3>Basic Information</h3>
-                <span className={`badge-stamp ${hotel.status}`}>
-                  <span className="dot"></span> {hotel.status}
+                <span className={`badge-stamp ${hotel?.status || 'approved'}`}>
+                  <span className="dot"></span> {hotel?.status || 'approved'}
                 </span>
               </div>
 
@@ -155,53 +206,53 @@ export default function HotelProfile() {
                     <input
                       type="text"
                       className="input"
-                      value={hotel.name}
-                      onChange={(e) => setHotel({...hotel, name: e.target.value})}
+                      value={formData.name || ''}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
                     />
                   ) : (
-                    <p style={{ margin: 0, fontWeight: '600' }}>{hotel.name}</p>
+                    <p style={{ margin: 0, fontWeight: '600' }}>{hotel?.name || '—'}</p>
                   )}
                 </div>
 
                 <div className="form-group">
-                  <label>Business Name</label>
+                  <label>Business / Legal Name</label>
                   {editing ? (
                     <input
                       type="text"
                       className="input"
-                      value={hotel.business_name}
-                      onChange={(e) => setHotel({...hotel, business_name: e.target.value})}
+                      value={formData.business_name || ''}
+                      onChange={(e) => setFormData({...formData, business_name: e.target.value})}
                     />
                   ) : (
-                    <p style={{ margin: 0 }}>{hotel.business_name}</p>
+                    <p style={{ margin: 0 }}>{hotel?.business_name || '—'}</p>
                   )}
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Email</label>
+                    <label>Contact Email</label>
                     {editing ? (
                       <input
                         type="email"
                         className="input"
-                        value={hotel.email}
-                        onChange={(e) => setHotel({...hotel, email: e.target.value})}
+                        value={formData.email || ''}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
                       />
                     ) : (
-                      <p style={{ margin: 0 }}>{hotel.email}</p>
+                      <p style={{ margin: 0 }}>{hotel?.email || '—'}</p>
                     )}
                   </div>
                   <div className="form-group">
-                    <label>Phone</label>
+                    <label>Contact Phone</label>
                     {editing ? (
                       <input
                         type="tel"
                         className="input"
-                        value={hotel.phone}
-                        onChange={(e) => setHotel({...hotel, phone: e.target.value})}
+                        value={formData.phone || ''}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
                       />
                     ) : (
-                      <p style={{ margin: 0 }}>{hotel.phone}</p>
+                      <p style={{ margin: 0 }}>{hotel?.phone || '—'}</p>
                     )}
                   </div>
                 </div>
@@ -212,11 +263,11 @@ export default function HotelProfile() {
                     <input
                       type="text"
                       className="input"
-                      value={hotel.address}
-                      onChange={(e) => setHotel({...hotel, address: e.target.value})}
+                      value={formData.address || ''}
+                      onChange={(e) => setFormData({...formData, address: e.target.value})}
                     />
                   ) : (
-                    <p style={{ margin: 0 }}>{hotel.address}</p>
+                    <p style={{ margin: 0 }}>{hotel?.address || '—'}</p>
                   )}
                 </div>
 
@@ -227,11 +278,11 @@ export default function HotelProfile() {
                       <input
                         type="text"
                         className="input"
-                        value={hotel.city}
-                        onChange={(e) => setHotel({...hotel, city: e.target.value})}
+                        value={formData.city || ''}
+                        onChange={(e) => setFormData({...formData, city: e.target.value})}
                       />
                     ) : (
-                      <p style={{ margin: 0 }}>{hotel.city}</p>
+                      <p style={{ margin: 0 }}>{hotel?.city || '—'}</p>
                     )}
                   </div>
                   <div className="form-group">
@@ -240,11 +291,11 @@ export default function HotelProfile() {
                       <input
                         type="text"
                         className="input"
-                        value={hotel.country}
-                        onChange={(e) => setHotel({...hotel, country: e.target.value})}
+                        value={formData.country || ''}
+                        onChange={(e) => setFormData({...formData, country: e.target.value})}
                       />
                     ) : (
-                      <p style={{ margin: 0 }}>{hotel.country}</p>
+                      <p style={{ margin: 0 }}>{hotel?.country || '—'}</p>
                     )}
                   </div>
                 </div>
@@ -255,45 +306,46 @@ export default function HotelProfile() {
                     {editing ? (
                       <select
                         className="input"
-                        value={hotel.category}
-                        onChange={(e) => setHotel({...hotel, category: e.target.value})}
+                        value={formData.category || '4-Star'}
+                        onChange={(e) => setFormData({...formData, category: e.target.value})}
                       >
                         <option value="5-Star">5-Star</option>
                         <option value="4-Star">4-Star</option>
                         <option value="3-Star">3-Star</option>
                         <option value="Boutique">Boutique</option>
                         <option value="Guest House">Guest House</option>
+                        <option value="Resort">Resort</option>
                       </select>
                     ) : (
-                      <p style={{ margin: 0 }}>{hotel.category}</p>
+                      <p style={{ margin: 0 }}>{hotel?.category || '—'}</p>
                     )}
                   </div>
                   <div className="form-group">
-                    <label>Room Count</label>
+                    <label>Total Room Count</label>
                     {editing ? (
                       <input
                         type="number"
                         className="input"
-                        value={hotel.room_count}
-                        onChange={(e) => setHotel({...hotel, room_count: parseInt(e.target.value)})}
+                        value={formData.room_count || 1}
+                        onChange={(e) => setFormData({...formData, room_count: parseInt(e.target.value) || 1})}
                       />
                     ) : (
-                      <p style={{ margin: 0 }}>{hotel.room_count} rooms</p>
+                      <p style={{ margin: 0 }}>{hotel?.room_count || 0} rooms</p>
                     )}
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label>Description</label>
+                  <label>Hotel Description</label>
                   {editing ? (
                     <textarea
                       className="input"
                       rows={4}
-                      value={hotel.description}
-                      onChange={(e) => setHotel({...hotel, description: e.target.value})}
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
                     />
                   ) : (
-                    <p style={{ margin: 0, lineHeight: '1.5' }}>{hotel.description}</p>
+                    <p style={{ margin: 0, lineHeight: '1.5' }}>{hotel?.description || 'No description provided.'}</p>
                   )}
                 </div>
               </div>
@@ -301,16 +353,16 @@ export default function HotelProfile() {
 
             <div className="panel">
               <div className="panel-head">
-                <h3>Photo Gallery</h3>
+                <h3>Photo Showcase</h3>
                 <div>
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleImageUpload}
+                    onChange={handleAddPhoto}
                     style={{ display: 'none' }}
-                    id="image-upload"
+                    id="hotel-photo-input"
                   />
-                  <label htmlFor="image-upload" className="btn btn-brass btn-sm">
+                  <label htmlFor="hotel-photo-input" className="btn btn-brass btn-sm" style={{ cursor: 'pointer' }}>
                     + Add Photo
                   </label>
                 </div>
@@ -322,118 +374,48 @@ export default function HotelProfile() {
                 gap: '12px',
                 marginTop: '16px'
               }}>
-                {gallery.map((image) => (
-                  <div key={image.id} style={{ 
+                {gallery.map((photo) => (
+                  <div key={photo.id} style={{ 
                     position: 'relative', 
                     aspectRatio: '4/3',
-                    background: 'var(--parchment-2)', 
+                    background: 'linear-gradient(135deg, var(--brass) 0%, var(--brass-dark) 100%)', 
                     borderRadius: '8px',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    padding: '8px',
+                    textAlign: 'center'
                   }}>
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      background: `linear-gradient(135deg, var(--brass) 0%, var(--brass-dark) 100%)`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#fff',
-                      fontSize: '1.2rem'
-                    }}>
-                      🏨
-                    </div>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '4px' }}>🏨</div>
+                    <span style={{ fontSize: '.75rem', fontWeight: 600 }}>{photo.title}</span>
                     <button
-                      onClick={() => removeImage(image.id)}
+                      type="button"
+                      onClick={() => removePhoto(photo.id)}
                       style={{
                         position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        border: 'none',
-                        background: 'rgba(0,0,0,0.7)',
+                        top: '6px',
+                        right: '6px',
+                        background: 'rgba(0,0,0,0.6)',
                         color: '#fff',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '22px',
+                        height: '22px',
+                        fontSize: '.75rem',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '14px'
+                        justifyContent: 'center'
                       }}
                     >
-                      ×
+                      ✕
                     </button>
                   </div>
                 ))}
               </div>
-
-              <div className="mt-32">
-                <h4>Cover Photo</h4>
-                <div style={{ 
-                  aspectRatio: '16/9',
-                  background: `linear-gradient(135deg, var(--emerald) 0%, var(--emerald-dk) 100%)`,
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  fontSize: '2rem',
-                  marginTop: '12px'
-                }}>
-                  🏨
-                </div>
-                <button className="btn btn-ghost btn-sm btn-block mt-12">
-                  Update Cover Photo
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="panel mt-32">
-            <div className="panel-head">
-              <h3>Location & Map</h3>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Latitude</label>
-                {editing ? (
-                  <input
-                    type="number"
-                    step="any"
-                    className="input"
-                    value={hotel.latitude}
-                    onChange={(e) => setHotel({...hotel, latitude: parseFloat(e.target.value)})}
-                  />
-                ) : (
-                  <p style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>{hotel.latitude}</p>
-                )}
-              </div>
-              <div className="form-group">
-                <label>Longitude</label>
-                {editing ? (
-                  <input
-                    type="number"
-                    step="any"
-                    className="input"
-                    value={hotel.longitude}
-                    onChange={(e) => setHotel({...hotel, longitude: parseFloat(e.target.value)})}
-                  />
-                ) : (
-                  <p style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>{hotel.longitude}</p>
-                )}
-              </div>
-            </div>
-            <div style={{
-              height: '200px',
-              background: 'var(--parchment-2)',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginTop: '16px',
-              color: 'var(--muted)'
-            }}>
-              📍 Map integration would be implemented here
             </div>
           </div>
         </div>
