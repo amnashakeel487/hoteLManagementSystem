@@ -43,11 +43,6 @@ export default function Landing() {
       <header className="hero">
         <div className="container hero-grid">
           <div>
-            <div className="promo-pill mb-16">
-              <span className="promo-tag-free">FREE</span>
-              <span className="promo-sparkle">✦</span>
-              <span>Complimentary Professional Cleaning on Every Approved Stay</span>
-            </div>
             <span className="eyebrow">Owner Onboarding &amp; Approval</span>
             <h1>Every stay starts with a <em>stamp of approval.</em></h1>
             <p className="lede">
@@ -86,6 +81,36 @@ export default function Landing() {
           </div>
         </div>
       </header>
+
+      {/* Prominent Free Cleaning Guarantee Banner */}
+      <section className="promo-highlight-section">
+        <div className="container">
+          <Reveal>
+            <div className="promo-highlight-banner">
+              <div className="promo-highlight-main">
+                <div className="promo-highlight-badge">
+                  <span className="promo-tag-free">FREE</span>
+                  <span className="promo-sparkle">✦</span>
+                </div>
+                <div className="promo-highlight-content">
+                  <div className="promo-highlight-eyebrow">EXCLUSIVE STAYFOLIO GUARANTEE</div>
+                  <h3 className="promo-highlight-title">
+                    Complimentary Professional Cleaning on Every Approved Stay
+                  </h3>
+                  <p className="promo-highlight-desc">
+                    Every reservation booked through Stayfolio includes verified 5-star room turnaround by certified local cleaning teams at zero extra cost to guests or owners.
+                  </p>
+                </div>
+              </div>
+              <div className="promo-highlight-cta">
+                <Link to="/explore" className="btn btn-brass">
+                  Explore &amp; Book Stays →
+                </Link>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
 
       {/* Interactive Platform Navigation Bar */}
       <div style={{
