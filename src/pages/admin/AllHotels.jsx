@@ -29,6 +29,7 @@ export default function AllHotels() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadAllHotels();
@@ -37,13 +38,17 @@ export default function AllHotels() {
   const loadAllHotels = async () => {
     try {
       setLoading(true);
+      setError('');
       const res = await apiCall('/api/admin/hotels?status=all');
       if (res.ok) {
         const data = await res.json();
         setHotels(data.hotels || []);
+      } else {
+        setError('Failed to load hotels. Please try again.');
       }
     } catch (err) {
       console.error('Failed to load hotels:', err);
+      setError('Network error. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -54,16 +59,26 @@ export default function AllHotels() {
   };
 
   const filteredHotels = hotels.filter(hotel => {
-    const matchesSearch = hotel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         hotel.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         hotel.country.toLowerCase().includes(searchTerm.toLowerCase());
+    const name = (hotel.name || '').toLowerCase();
+    const city = (hotel.city || '').toLowerCase();
+    const country = (hotel.country || '').toLowerCase();
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = name.includes(term) || city.includes(term) || country.includes(term);
     const matchesStatus = filterStatus === 'all' || hotel.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
+  const uniqueCountries = new Set(hotels.map(h => h.country).filter(Boolean)).size;
+  const activeCount = hotels.filter(h => h.status === 'approved').length;
+  const ratedHotels = hotels.filter(h => h.rating > 0);
+  const avgRating = ratedHotels.length > 0
+    ? (ratedHotels.reduce((s, h) => s + (h.rating || 0), 0) / ratedHotels.length).toFixed(1)
+    : '—';
+
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '12px', color: '#64748b' }}>
+        <div style={{ fontSize: '1.5rem' }}>🏨</div>
         Loading all hotels...
       </div>
     );
@@ -74,15 +89,15 @@ export default function AllHotels() {
       <Sidebar
         items={sidebarItems.map(section => ({
           ...section,
-          links: section.links.map(link => 
+          links: section.links.map(link =>
             link.text === 'Log out' ? { ...link, onClick: handleLogout } : link
           )
         }))}
-        who={{ 
-          initials: 'AD', 
-          name: user?.email?.split('@')[0] || 'Admin', 
-          subtitle: 'Platform Admin', 
-          avatarStyle: { background: 'var(--emerald)', color: '#fff' } 
+        who={{
+          initials: 'AD',
+          name: user?.email?.split('@')[0] || 'Admin',
+          subtitle: 'Platform Admin',
+          avatarStyle: { background: 'var(--emerald)', color: '#fff' }
         }}
       />
 
@@ -90,9 +105,9 @@ export default function AllHotels() {
         <div className="app-topbar">
           <h1>All Hotels</h1>
           <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link 
-              to="/explore" 
-              target="_blank" 
+            <Link
+              to="/explore"
+              target="_blank"
               className="btn btn-ghost btn-sm"
               style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.82rem', fontWeight: 600, padding: '6px 14px' }}
             >
@@ -104,25 +119,34 @@ export default function AllHotels() {
         </div>
 
         <div className="app-body">
+          {error && (
+            <div style={{ background: '#fff1f2', color: '#dc2626', border: '1px solid #fca5a5', padding: '14px 18px', borderRadius: '8px', marginBottom: '20px', fontSize: '.9rem' }}>
+              ⚠️ {error}
+              <button onClick={loadAllHotels} style={{ marginLeft: '12px', textDecoration: 'underline', background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 600 }}>
+                Retry
+              </button>
+            </div>
+          )}
+
           <div className="stat-row">
             <div className="keycard">
               <span className="k-eyebrow">Total Hotels</span>
               <div className="k-value">{hotels.length}</div>
-              <span className="k-note">Across {new Set(hotels.map(h => h.country)).size} countries</span>
+              <span className="k-note">Across {uniqueCountries} {uniqueCountries === 1 ? 'country' : 'countries'}</span>
             </div>
             <div className="keycard">
               <span className="k-eyebrow">Active Hotels</span>
-              <div className="k-value">{hotels.filter(h => h.status === 'approved').length}</div>
+              <div className="k-value">{activeCount}</div>
               <span className="k-note">Currently accepting bookings</span>
             </div>
             <div className="keycard">
-              <span className="k-eyebrow">Total Revenue (30d)</span>
-              <div className="k-value">Rs {hotels.reduce((sum, h) => sum + h.revenue_30d, 0).toLocaleString()}</div>
-              <span className="k-note">All active properties</span>
+              <span className="k-eyebrow">Pending Review</span>
+              <div className="k-value">{hotels.filter(h => h.status === 'pending').length}</div>
+              <span className="k-note">Awaiting admin approval</span>
             </div>
             <div className="keycard">
               <span className="k-eyebrow">Avg Rating</span>
-              <div className="k-value">{(hotels.filter(h => h.rating > 0).reduce((sum, h) => sum + h.rating, 0) / hotels.filter(h => h.rating > 0).length || 0).toFixed(1)}</div>
+              <div className="k-value">{avgRating}</div>
               <span className="k-note">Across all reviews</span>
             </div>
           </div>
@@ -131,16 +155,16 @@ export default function AllHotels() {
             <div className="panel-head">
               <h3>Hotel Directory</h3>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <input 
-                  className="input" 
-                  type="text" 
+                <input
+                  className="input"
+                  type="text"
                   placeholder="Search hotels, cities..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   style={{ width: '200px' }}
                 />
-                <select 
-                  className="input" 
+                <select
+                  className="input"
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
                   style={{ width: '140px' }}
@@ -161,8 +185,8 @@ export default function AllHotels() {
                     <th>Hotel</th>
                     <th>Location</th>
                     <th>Status</th>
-                    <th>Bookings (30d)</th>
-                    <th>Revenue (30d)</th>
+                    <th>Category</th>
+                    <th>Rooms</th>
                     <th>Rating</th>
                     <th>Joined</th>
                     <th>Actions</th>
@@ -175,15 +199,15 @@ export default function AllHotels() {
                         <div className="row-hotel">
                           <div className="thumb"></div>
                           <div>
-                            <b>{hotel.name}</b>
-                            <span>{hotel.category} · {hotel.room_count} rooms</span>
+                            <b>{hotel.name || '—'}</b>
+                            <span>{hotel.business_name || '—'}</span>
                           </div>
                         </div>
                       </td>
-                      <td>{hotel.city}, {hotel.country}</td>
-                      <td><StatusBadge status={hotel.status} /></td>
-                      <td>{hotel.bookings_30d}</td>
-                      <td>Rs {hotel.revenue_30d.toLocaleString()}</td>
+                      <td>{hotel.city || '—'}, {hotel.country || '—'}</td>
+                      <td><StatusBadge status={hotel.status || 'pending'} /></td>
+                      <td>{hotel.category || '—'}</td>
+                      <td>{hotel.room_count ?? '—'}</td>
                       <td>
                         {hotel.rating > 0 ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -194,11 +218,12 @@ export default function AllHotels() {
                           <span className="text-muted">—</span>
                         )}
                       </td>
-                      <td className="text-muted">{new Date(hotel.created_at).toLocaleDateString()}</td>
+                      <td className="text-muted">
+                        {hotel.created_at ? new Date(hotel.created_at).toLocaleDateString() : '—'}
+                      </td>
                       <td>
                         <div className="table-actions">
-                          <button title="View Details">👁</button>
-                          <button title="Edit Hotel">✎</button>
+                          <Link to={`/hotel/${hotel.id}`} target="_blank" title="View public page">👁</Link>
                           {hotel.status === 'approved' && (
                             <button title="Suspend Hotel" style={{ color: 'var(--rust)' }}>⏸</button>
                           )}
@@ -213,9 +238,9 @@ export default function AllHotels() {
               </table>
             </div>
 
-            {filteredHotels.length === 0 && (
+            {filteredHotels.length === 0 && !error && (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ink-3)' }}>
-                <p>No hotels found matching your criteria.</p>
+                <p>No hotels found{searchTerm || filterStatus !== 'all' ? ' matching your filters.' : ' yet.'}</p>
               </div>
             )}
           </div>
