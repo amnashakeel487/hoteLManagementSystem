@@ -778,7 +778,10 @@ section{ padding:112px 0; }
   position:absolute; inset:0;
   background:radial-gradient(circle at 20% 85%, rgba(31,111,92,0.22), transparent 50%);
 }
-.auth-aside .aside-copy{ position:relative; margin-top:80px; max-width:380px; }
+.auth-aside .brand {
+  color: var(--parchment);
+}
+.auth-aside .aside-copy{ position:relative; margin-top:32px; max-width:380px; }
 .auth-aside .aside-copy h2{ color:var(--parchment); font-size:2rem; font-weight:500; line-height:1.2; margin-bottom:16px; }
 .auth-aside .aside-copy p{ color:rgba(251,246,236,.65); }
 .auth-checklist{ margin-top:40px; display:flex; flex-direction:column; gap:16px; position:relative; }
