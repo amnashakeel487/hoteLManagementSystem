@@ -41,92 +41,78 @@ export default function AdminDashboard() {
 
   const fetchAdminData = async () => {
     try {
-      // Load sample data immediately
-      setHotels({
-        pending: [
-          {
-            id: 2,
-            name: 'Coral Bay Villas',
-            business_name: 'Coral Bay Resort Ltd',
-            category: 'Boutique',
-            city: 'Zanzibar',
-            country: 'Tanzania',
-            email: 'info@coralbayvillas.com',
-            phone: '+255 123 456789',
-            address: 'Beach Road, Stone Town',
-            description: 'Boutique beachfront villas',
-            room_count: 12,
-            status: 'pending',
-            created_at: new Date().toISOString()
-          }
-        ],
-        approved: [
-          {
-            id: 1,
-            name: 'The Marlow Hotel',
-            business_name: 'Marlow Hospitality Ltd',
-            category: '5-Star',
-            city: 'Lahore',
-            country: 'Pakistan',
-            status: 'approved'
-          }
-        ],
-        rejected: [],
-        suspended: []
-      });
-      setReviewing({
-        id: 2,
-        name: 'Coral Bay Villas',
-        business_name: 'Coral Bay Resort Ltd',
-        category: 'Boutique',
-        city: 'Zanzibar',
-        country: 'Tanzania',
-        email: 'info@coralbayvillas.com',
-        phone: '+255 123 456789',
-        address: 'Beach Road, Stone Town',
-        description: 'Boutique beachfront villas with stunning ocean views',
-        room_count: 12,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      });
-      setLoading(false);
+      setLoading(true);
+      const res = await apiCall('/api/admin/hotels?status=all');
+      if (res.ok) {
+        const data = await res.json();
+        const allHotels = data.hotels || [];
+        
+        const grouped = {
+          pending: allHotels.filter(h => h.status === 'pending'),
+          approved: allHotels.filter(h => h.status === 'approved' || h.status === 'active'),
+          rejected: allHotels.filter(h => h.status === 'rejected'),
+          suspended: allHotels.filter(h => h.status === 'suspended')
+        };
+        
+        setHotels(grouped);
+        if (grouped.pending.length > 0) {
+          setReviewing(grouped.pending[0]);
+        } else if (allHotels.length > 0) {
+          setReviewing(allHotels[0]);
+        }
+      }
     } catch (err) {
       console.error('Error fetching admin data:', err);
+    } finally {
       setLoading(false);
     }
   };
 
   const approveHotel = async (hotelId) => {
-    console.log('Approving hotel:', hotelId);
-    // Move hotel from pending to approved
-    const hotel = hotels.pending.find(h => h.id === hotelId);
-    if (hotel) {
-      setHotels(prev => ({
-        ...prev,
-        pending: prev.pending.filter(h => h.id !== hotelId),
-        approved: [...prev.approved, { ...hotel, status: 'approved' }]
-      }));
-      
-      if (reviewing?.id === hotelId) {
-        setReviewing({ ...reviewing, status: 'approved' });
+    try {
+      const res = await apiCall(`/api/admin/hotels/${hotelId}/approve`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        const hotel = hotels.pending.find(h => h.id === hotelId);
+        if (hotel) {
+          setHotels(prev => ({
+            ...prev,
+            pending: prev.pending.filter(h => h.id !== hotelId),
+            approved: [{ ...hotel, status: 'approved' }, ...prev.approved]
+          }));
+          if (reviewing?.id === hotelId) {
+            setReviewing({ ...reviewing, status: 'approved' });
+          }
+        }
       }
+    } catch (err) {
+      console.error('Failed to approve hotel:', err);
     }
   };
 
   const rejectHotel = async (hotelId, reason) => {
-    console.log('Rejecting hotel:', hotelId, 'Reason:', reason);
-    // Move hotel from pending to rejected
-    const hotel = hotels.pending.find(h => h.id === hotelId);
-    if (hotel) {
-      setHotels(prev => ({
-        ...prev,
-        pending: prev.pending.filter(h => h.id !== hotelId),
-        rejected: [...prev.rejected, { ...hotel, status: 'rejected', rejection_reason: reason }]
-      }));
-      
-      if (reviewing?.id === hotelId) {
-        setReviewing({ ...reviewing, status: 'rejected', rejection_reason: reason });
+    try {
+      const res = await apiCall(`/api/admin/hotels/${hotelId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason || 'Application rejected by admin' })
+      });
+      if (res.ok) {
+        const hotel = hotels.pending.find(h => h.id === hotelId);
+        if (hotel) {
+          setHotels(prev => ({
+            ...prev,
+            pending: prev.pending.filter(h => h.id !== hotelId),
+            rejected: [{ ...hotel, status: 'rejected', rejection_reason: reason }, ...prev.rejected]
+          }));
+          if (reviewing?.id === hotelId) {
+            setReviewing({ ...reviewing, status: 'rejected', rejection_reason: reason });
+          }
+        }
       }
+    } catch (err) {
+      console.error('Failed to reject hotel:', err);
     }
   };
 

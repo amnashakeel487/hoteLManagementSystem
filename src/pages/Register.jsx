@@ -9,6 +9,7 @@ const initialForm = {
   businessName: '',
   email: '',
   phone: '',
+  password: '',
   address: '',
   city: '',
   country: '',
@@ -152,6 +153,12 @@ export default function Register() {
                     <input className="input" type="tel" placeholder="+1 (___) ___ ____"
                       value={form.phone} onChange={update('phone')} required />
                   </div>
+                </div>
+                <div className="field-group">
+                  <label>Create owner login password</label>
+                  <input className="input" type="password" placeholder="At least 6 characters"
+                    value={form.password} onChange={update('password')} minLength={6} required />
+                  <p className="input-hint">You will use this password to log in to your owner dashboard once approved.</p>
                 </div>
               </div>
             )}

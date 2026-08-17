@@ -22,7 +22,7 @@ const sidebarItems = [
 ];
 
 export default function AllHotels() {
-  const { user, logout } = useAuth();
+  const { user, apiCall, logout } = useAuth();
   const [hotels, setHotels] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -32,67 +32,19 @@ export default function AllHotels() {
     loadAllHotels();
   }, []);
 
-  const loadAllHotels = () => {
-    // Load sample data immediately
-    setHotels([
-      {
-        id: 1,
-        name: 'The Marlow Hotel',
-        business_name: 'Marlow Hospitality Ltd',
-        category: '5-Star',
-        city: 'Lahore',
-        country: 'Pakistan',
-        status: 'approved',
-        room_count: 24,
-        bookings_30d: 118,
-        revenue_30d: 1840000,
-        rating: 4.7,
-        created_at: '2026-07-15T10:00:00Z'
-      },
-      {
-        id: 2,
-        name: 'Coral Bay Villas',
-        business_name: 'Coral Bay Resort Ltd',
-        category: 'Boutique',
-        city: 'Zanzibar',
-        country: 'Tanzania',
-        status: 'approved',
-        room_count: 12,
-        bookings_30d: 45,
-        revenue_30d: 890000,
-        rating: 4.3,
-        created_at: '2026-08-01T14:30:00Z'
-      },
-      {
-        id: 3,
-        name: 'Sierra Guest House',
-        business_name: 'Sierra Hospitality',
-        category: 'Guest House',
-        city: 'Goa',
-        country: 'India',
-        status: 'approved',
-        room_count: 8,
-        bookings_30d: 22,
-        revenue_30d: 320000,
-        rating: 4.1,
-        created_at: '2026-06-20T09:15:00Z'
-      },
-      {
-        id: 4,
-        name: 'Palm Court Suites',
-        business_name: 'Palm Hospitality',
-        category: '4-Star',
-        city: 'Istanbul',
-        country: 'Turkey',
-        status: 'rejected',
-        room_count: 18,
-        bookings_30d: 0,
-        revenue_30d: 0,
-        rating: 0,
-        created_at: '2026-08-10T16:45:00Z'
+  const loadAllHotels = async () => {
+    try {
+      setLoading(true);
+      const res = await apiCall('/api/admin/hotels?status=all');
+      if (res.ok) {
+        const data = await res.json();
+        setHotels(data.hotels || []);
       }
-    ]);
-    setLoading(false);
+    } catch (err) {
+      console.error('Failed to load hotels:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {

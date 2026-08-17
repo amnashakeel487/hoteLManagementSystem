@@ -17,7 +17,7 @@ def register_hotel():
     form_fields = [
         'hotelName', 'businessName', 'email', 'phone', 'address', 
         'city', 'country', 'latitude', 'longitude', 'description', 
-        'roomCount', 'category'
+        'roomCount', 'category', 'password'
     ]
     
     for field in form_fields:
@@ -61,13 +61,18 @@ def register_hotel():
                     file_paths[db_field] = file_path
     
     # Check if a user with this email already exists, or create one for the applicant
-    existing_user = User.query.filter_by(email=data['email']).lower().first() if hasattr(User.query.filter_by(email=data['email']), 'lower') else User.query.filter_by(email=data['email'].strip().lower()).first()
+    user_email = data['email'].strip().lower()
+    user_password = data.get('password') or 'owner123'
+    existing_user = User.query.filter_by(email=user_email).first()
+    
     if not existing_user:
-        import secrets
-        existing_user = User(email=data['email'].strip().lower(), role='hotel_owner')
-        existing_user.set_password(secrets.token_urlsafe(12))
+        existing_user = User(email=user_email, role='hotel_owner')
+        existing_user.set_password(user_password)
         db.session.add(existing_user)
         db.session.flush()
+    elif data.get('password'):
+        existing_user.set_password(data['password'])
+        existing_user.role = 'hotel_owner'
     
     owner_id = existing_user.id
     
