@@ -76,14 +76,15 @@ export default function BookingsCalendar() {
   };
 
   const filteredBookings = bookings.filter(booking => {
+    if (!booking) return false;
     if (filter === 'all') return true;
     return booking.status === filter;
   });
 
   const statusCounts = {
-    pending: bookings.filter(b => b.status === 'pending').length,
-    approved: bookings.filter(b => b.status === 'approved').length,
-    rejected: bookings.filter(b => b.status === 'rejected').length
+    pending: bookings.filter(b => b?.status === 'pending').length,
+    approved: bookings.filter(b => b?.status === 'approved').length,
+    rejected: bookings.filter(b => b?.status === 'rejected').length
   };
 
   const year = currentMonthDate.getFullYear();
@@ -96,7 +97,7 @@ export default function BookingsCalendar() {
     for (let i = 1; i <= daysInMonth; i++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       const dayBookings = bookings.filter(b => 
-        dateStr >= b.check_in && dateStr < b.check_out && b.status === 'approved'
+        b && b.status === 'approved' && b.check_in && b.check_out && dateStr >= b.check_in && dateStr < b.check_out
       );
       days.push({ date: i, bookings: dayBookings });
     }
@@ -104,6 +105,27 @@ export default function BookingsCalendar() {
   };
 
   const hotelName = hotel?.name || 'My Hotel';
+  const totalRevenue = bookings.reduce((sum, b) => sum + (parseFloat(b.total_amount) || 0), 0);
+
+  if (loading && !hotel) {
+    return (
+      <div className="app-shell">
+        <Sidebar
+          items={sidebarItems.map(section => ({
+            ...section,
+            links: section.links.map(link => link.text === 'Log out' ? { ...link, onClick: handleLogout } : link)
+          }))}
+          who={{ initials: 'MH', name: 'My Hotel', subtitle: 'Owner · Active' }}
+        />
+        <main className="app-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: '#64748b', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📅</div>
+            Loading bookings calendar...
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">
@@ -162,7 +184,7 @@ export default function BookingsCalendar() {
             </div>
             <div className="keycard">
               <span className="k-eyebrow">Revenue</span>
-              <div className="k-value">Rs {bookings.reduce((sum, b) => sum + b.total_amount, 0).toLocaleString()}</div>
+              <div className="k-value">Rs {totalRevenue.toLocaleString()}</div>
               <span className="k-note">Total value</span>
             </div>
           </div>
@@ -173,49 +195,57 @@ export default function BookingsCalendar() {
                 <h3>Booking Requests</h3>
                 <span className="tag">{filteredBookings.length} bookings</span>
               </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table className="data-table">
-                  <thead>
-                    <tr><th>Guest</th><th>Room</th><th>Dates</th><th>Amount</th><th>Status</th><th>Action</th></tr>
-                  </thead>
-                  <tbody>
-                    {filteredBookings.map((booking) => (
-                      <tr key={booking.id}>
-                        <td>
-                          <div className="row-hotel">
-                            <div className="thumb"></div>
-                            <div>
-                              <b>{booking.guest_name}</b>
-                              <span>{booking.guest_email}</span>
+              {filteredBookings.length === 0 ? (
+                <div style={{ padding: '36px 20px', textAlign: 'center', color: '#64748b' }}>
+                  <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>📅</div>
+                  <b style={{ color: '#0f172a', display: 'block', marginBottom: '4px' }}>No bookings found</b>
+                  <span style={{ fontSize: '.85rem' }}>There are no bookings matching the selected status filter.</span>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="data-table">
+                    <thead>
+                      <tr><th>Guest</th><th>Room</th><th>Dates</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                      {filteredBookings.map((booking) => (
+                        <tr key={booking.id}>
+                          <td>
+                            <div className="row-hotel">
+                              <div className="thumb"></div>
+                              <div>
+                                <b>{booking.guest_name || 'Guest'}</b>
+                                <span>{booking.guest_email || `Booking #${booking.id}`}</span>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td>{booking.room_category}</td>
-                        <td>
-                          <div style={{ fontSize: '.8rem' }}>
-                            <div>{new Date(booking.check_in).toLocaleDateString()}</div>
-                            <div className="text-muted">to {new Date(booking.check_out).toLocaleDateString()}</div>
-                          </div>
-                        </td>
-                        <td>Rs {booking.total_amount}</td>
-                        <td><StatusBadge status={booking.status} /></td>
-                        <td>
-                          <div className="table-actions">
-                            {booking.status === 'pending' ? (
-                              <>
-                                <button className="approve" onClick={() => setBookingStatus(booking.id, 'approved')}>✓</button>
-                                <button className="reject" onClick={() => setBookingStatus(booking.id, 'rejected')}>✕</button>
-                              </>
-                            ) : (
-                              <button>👁</button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          </td>
+                          <td>{booking.room_category || 'Room'}</td>
+                          <td>
+                            <div style={{ fontSize: '.8rem' }}>
+                              <div>{booking.check_in || 'N/A'}</div>
+                              <div className="text-muted">to {booking.check_out || 'N/A'}</div>
+                            </div>
+                          </td>
+                          <td>Rs {(parseFloat(booking.total_amount) || 0).toLocaleString()}</td>
+                          <td><StatusBadge status={booking.status} /></td>
+                          <td>
+                            <div className="table-actions">
+                              {booking.status === 'pending' ? (
+                                <>
+                                  <button title="Approve" className="approve" onClick={() => setBookingStatus(booking.id, 'approved')}>✓</button>
+                                  <button title="Reject" className="reject" onClick={() => setBookingStatus(booking.id, 'rejected')}>✕</button>
+                                </>
+                              ) : (
+                                <button title="View">👁</button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             <div className="panel">
@@ -294,9 +324,10 @@ export default function BookingsCalendar() {
 }
 
 function StatusBadge({ status }) {
-  const label = status.charAt(0).toUpperCase() + status.slice(1);
+  const safeStatus = status || 'pending';
+  const label = safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1);
   return (
-    <span className={`badge-stamp ${status}`}>
+    <span className={`badge-stamp ${safeStatus}`}>
       <span className="dot"></span> {label}
     </span>
   );
