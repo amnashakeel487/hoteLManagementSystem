@@ -80,11 +80,17 @@ def create_app(config_name=None):
             'version': '1.0.0'
         }
     
-    from flask import send_from_directory
+    from flask import send_from_directory, abort
     @app.route('/uploads/<path:filename>')
     def serve_uploaded_file(filename):
-        """Serve uploaded files (licenses, IDs, images)"""
+        """Serve uploaded files (licenses, IDs, images) with CORS headers."""
         upload_folder = os.path.abspath(app.config['UPLOAD_FOLDER'])
-        return send_from_directory(upload_folder, filename)
+        filepath = os.path.join(upload_folder, filename)
+        if not os.path.exists(filepath):
+            abort(404)
+        response = send_from_directory(upload_folder, filename)
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Cache-Control'] = 'public, max-age=31536000'
+        return response
     
     return app

@@ -11,26 +11,58 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
 
+def _upload_to_cloudinary(file, subfolder=''):
+    """Upload file to Cloudinary and return the secure URL."""
+    try:
+        import cloudinary
+        import cloudinary.uploader
+
+        cloudinary.config(
+            cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+            api_key=os.environ.get('CLOUDINARY_API_KEY'),
+            api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
+            secure=True
+        )
+
+        folder = f"stayfolio/{subfolder}" if subfolder else "stayfolio"
+        result = cloudinary.uploader.upload(
+            file,
+            folder=folder,
+            resource_type='auto'
+        )
+        # Return the full HTTPS URL so it can be opened anywhere
+        return result.get('secure_url')
+    except Exception as e:
+        current_app.logger.error(f"Cloudinary upload failed: {e}")
+        return None
+
 def save_file(file, subfolder=''):
-    """Save uploaded file and return the file path"""
-    if file and allowed_file(file.filename):
-        # Generate unique filename
-        filename = secure_filename(file.filename)
-        name, ext = os.path.splitext(filename)
-        unique_filename = f"{name}_{uuid.uuid4().hex[:8]}{ext}"
-        
-        # Create upload directory if it doesn't exist
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], subfolder)
-        os.makedirs(upload_path, exist_ok=True)
-        
-        # Save file
-        filepath = os.path.join(upload_path, unique_filename)
-        file.save(filepath)
-        
-        # Return relative path for database storage
-        return os.path.join(subfolder, unique_filename).replace('\\', '/')
-    
-    return None
+    """Save uploaded file.
+    Uses Cloudinary when CLOUDINARY_CLOUD_NAME env var is set (production),
+    falls back to local filesystem otherwise (development).
+    Always returns the path/URL stored in the database.
+    """
+    if not file or not allowed_file(file.filename):
+        return None
+
+    # ── CLOUDINARY (production) ─────────────────────────────────────────────
+    if os.environ.get('CLOUDINARY_CLOUD_NAME'):
+        file.seek(0)
+        return _upload_to_cloudinary(file, subfolder)
+
+    # ── LOCAL FILESYSTEM (development fallback) ─────────────────────────────
+    filename = secure_filename(file.filename)
+    name, ext = os.path.splitext(filename)
+    unique_filename = f"{name}_{uuid.uuid4().hex[:8]}{ext}"
+
+    upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], subfolder)
+    os.makedirs(upload_path, exist_ok=True)
+
+    filepath = os.path.join(upload_path, unique_filename)
+    file.seek(0)
+    file.save(filepath)
+
+    return os.path.join(subfolder, unique_filename).replace('\\', '/')
 
 def role_required(*roles):
     """Decorator to check if user has required role"""
@@ -76,10 +108,14 @@ def hotel_owner_required(f):
     return decorated_function
 
 def get_file_url(file_path):
-    """Generate URL for uploaded file"""
+    """Generate URL for an uploaded file.
+    - If the path is already a full URL (Cloudinary), return as-is.
+    - Otherwise, build a local /uploads/<path> URL.
+    """
     if not file_path:
         return None
-    # In production, this would return a proper URL (S3, CDN, etc.)
+    if file_path.startswith('http'):
+        return file_path
     return f"/uploads/{file_path}"
 
 def validate_file_upload(file, max_size_mb=10):
@@ -90,7 +126,7 @@ def validate_file_upload(file, max_size_mb=10):
     if not allowed_file(file.filename):
         return None, f"File type not allowed. Allowed: {', '.join(current_app.config['ALLOWED_EXTENSIONS'])}"
     
-    # Check file size (approximate, since we can't get exact size without reading)
+    # Check file size
     file.seek(0, os.SEEK_END)
     size = file.tell()
     file.seek(0)
