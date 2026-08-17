@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Hotel Registration Request</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #FBF6EC; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #241F17;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #FBF6EC; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <!-- Main Container -->
+        <table role="presentation" width="100%" max-width="580" cellspacing="0" cellpadding="0" border="0" style="max-width: 580px; background-color: #FFFDF8; border-radius: 12px; border: 1px solid rgba(18, 33, 60, 0.12); overflow: hidden; box-shadow: 0 4px 20px rgba(18, 33, 60, 0.06);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background-color: #12213C; padding: 28px 32px; text-align: left;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td>
+                    <span style="display: inline-block; width: 14px; height: 14px; background-color: #B08D57; border-radius: 3px; vertical-align: middle; margin-right: 8px;"></span>
+                    <span style="font-size: 20px; font-weight: 700; color: #FBF6EC; letter-spacing: -0.01em; vertical-align: middle;">Stayfolio</span>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: #B08D57; letter-spacing: 0.1em; background: rgba(176, 141, 87, 0.15); padding: 4px 8px; border-radius: 4px;">Admin Alert</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 36px 32px;">
+              <span style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: #B08D57; letter-spacing: 0.12em; font-weight: 600; display: block; margin-bottom: 8px;">Pending Review</span>
+              <h1 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #12213C; line-height: 1.25;">New Hotel Registration Submitted</h1>
+              <p style="font-size: 15px; line-height: 1.6; color: #475569; margin: 0 0 24px;">
+                A new hotel has submitted their onboarding application and documents for verification.
+              </p>
+
+              <!-- Application Summary Card -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; margin: 0 0 24px; padding: 20px;">
+                <tr>
+                  <td>
+                    <div style="font-size: 12px; font-family: monospace; text-transform: uppercase; color: #64748B; margin-bottom: 12px; font-weight: 600;">Submission Summary</div>
+                    <div style="font-size: 14px; color: #1E293B; margin-bottom: 8px;">
+                      <strong>Hotel Name:</strong> {{ hotel_name }}
+                    </div>
+                    <div style="font-size: 14px; color: #1E293B; margin-bottom: 8px;">
+                      <strong>Business Name:</strong> {{ business_name or 'N/A' }}
+                    </div>
+                    <div style="font-size: 14px; color: #1E293B; margin-bottom: 8px;">
+                      <strong>Location:</strong> {{ city }}, {{ country }}
+                    </div>
+                    <div style="font-size: 14px; color: #1E293B; margin-bottom: 8px;">
+                      <strong>Contact Email:</strong> <span style="font-family: monospace;">{{ owner_email }}</span>
+                    </div>
+                    <div style="font-size: 14px; color: #1E293B;">
+                      <strong>Category / Rooms:</strong> {{ category or 'Hotel' }} ({{ room_count or 'N/A' }} rooms)
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 0 24px;">
+                <tr>
+                  <td align="center" style="border-radius: 6px; background-color: #12213C;">
+                    <a href="{{ review_url }}" target="_blank" style="font-size: 14px; font-weight: 600; color: #FBF6EC; text-decoration: none; padding: 13px 26px; display: inline-block; border-radius: 6px; background-color: #12213C; border: 1px solid #12213C;">
+                      Open Admin Review Panel →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="font-size: 13px; color: #64748B; line-height: 1.5; margin: 0;">
+                You can review the submitted business license, CNIC/identity documents, and approve or reject the request directly from the console.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 20px 32px; text-align: center;">
+              <p style="font-size: 12px; color: #94A3B8; margin: 0;">
+                Stayfolio Administration Portal · Automated System Notification
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

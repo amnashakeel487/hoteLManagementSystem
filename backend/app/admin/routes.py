@@ -77,8 +77,12 @@ def create_hotel_admin(user):
             db.session.add(owner)
             db.session.flush()  # Get the ID
             
-            # Send credentials email
-            send_owner_credentials(owner.email, temp_password, data['name'])
+            # Send credentials email (Event 1)
+            try:
+                from app.services.email_service import send_owner_welcome_email
+                send_owner_welcome_email(owner.email, temp_password, data['name'])
+            except Exception as mail_err:
+                current_app.logger.error(f"Non-blocking email error on owner creation: {mail_err}")
         else:
             # Update existing user to hotel_owner if needed
             if owner.role == 'customer':
@@ -147,9 +151,13 @@ def approve_hotel(user, hotel_id):
     
     db.session.commit()
     
-    # Send approval email
+    # Send approval email (Event 3) — safe non-blocking
     if hotel.email:
-        send_approval_email(hotel.email, hotel.name)
+        try:
+            from app.services.email_service import send_hotel_approved_email
+            send_hotel_approved_email(hotel.email, hotel.name)
+        except Exception as mail_err:
+            current_app.logger.error(f"Non-blocking email error on approve: {mail_err}")
     
     return {
         'message': 'Hotel approved successfully',
@@ -177,13 +185,56 @@ def reject_hotel(user, hotel_id):
     
     db.session.commit()
     
-    # Send rejection email
+    # Send rejection email (Event 4) — safe non-blocking
     if hotel.email:
-        send_rejection_email(hotel.email, hotel.name, reason)
+        try:
+            from app.services.email_service import send_hotel_rejected_email
+            send_hotel_rejected_email(hotel.email, hotel.name, reason)
+        except Exception as mail_err:
+            current_app.logger.error(f"Non-blocking email error on reject: {mail_err}")
     
     return {
         'message': 'Hotel rejected successfully',
         'hotel': hotel.to_dict(include_sensitive=True)
+    }
+
+@admin_bp.route('/hotels/<int:hotel_id>/notify', methods=['POST'])
+@jwt_required()
+@role_required('admin')
+def notify_hotel_owner(user, hotel_id):
+    """Admin sends an ad-hoc notification email to a hotel owner (Event 5)"""
+    hotel = Hotel.query.get_or_404(hotel_id)
+    data = request.get_json() or {}
+    
+    message = data.get('message', '').strip()
+    subject = data.get('subject', '').strip()
+    
+    if not message:
+        return {'error': 'Message text is required'}, 400
+        
+    owner_email = hotel.email
+    if not owner_email and hotel.owner_id:
+        owner = User.query.get(hotel.owner_id)
+        if owner:
+            owner_email = owner.email
+            
+    if not owner_email:
+        return {'error': 'No contact email found for this hotel owner'}, 404
+        
+    try:
+        from app.services.email_service import send_owner_adhoc_notification
+        send_owner_adhoc_notification(
+            email=owner_email,
+            hotel_name=hotel.name,
+            message_text=message,
+            subject=subject or None
+        )
+    except Exception as mail_err:
+        current_app.logger.error(f"Non-blocking email error on notify: {mail_err}")
+        
+    return {
+        'message': 'Notification sent to hotel owner successfully',
+        'hotel_id': hotel.id
     }
 
 @admin_bp.route('/hotels/<int:hotel_id>/suspend', methods=['POST'])

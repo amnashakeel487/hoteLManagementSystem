@@ -99,6 +99,13 @@ def register_hotel():
         db.session.add(hotel)
         db.session.commit()
         
+        # Trigger Admin Email Notification (Event 2)
+        try:
+            from app.services.email_service import send_admin_new_registration_notification
+            send_admin_new_registration_notification(hotel.to_dict(include_sensitive=True))
+        except Exception as mail_err:
+            current_app.logger.error(f"Non-blocking email error on registration: {mail_err}")
+        
         return {
             'message': 'Hotel registration submitted successfully',
             'hotel_id': hotel.id,

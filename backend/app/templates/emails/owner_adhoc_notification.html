@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ subject or 'Stayfolio Platform Notice' }}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #FBF6EC; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #241F17;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #FBF6EC; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <!-- Main Container -->
+        <table role="presentation" width="100%" max-width="580" cellspacing="0" cellpadding="0" border="0" style="max-width: 580px; background-color: #FFFDF8; border-radius: 12px; border: 1px solid rgba(18, 33, 60, 0.12); overflow: hidden; box-shadow: 0 4px 20px rgba(18, 33, 60, 0.06);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background-color: #12213C; padding: 28px 32px; text-align: left;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td>
+                    <span style="display: inline-block; width: 14px; height: 14px; background-color: #B08D57; border-radius: 3px; vertical-align: middle; margin-right: 8px;"></span>
+                    <span style="font-size: 20px; font-weight: 700; color: #FBF6EC; letter-spacing: -0.01em; vertical-align: middle;">Stayfolio</span>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: #B08D57; letter-spacing: 0.1em; background: rgba(176, 141, 87, 0.15); padding: 4px 8px; border-radius: 4px;">Platform Notice</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 36px 32px;">
+              <span style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: #8C6D3F; letter-spacing: 0.12em; font-weight: 600; display: block; margin-bottom: 8px;">Message regarding {{ hotel_name }}</span>
+              <h1 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #12213C; line-height: 1.25;">{{ subject or 'Important Update from Stayfolio Administration' }}</h1>
+              
+              <!-- Message Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; margin: 0 0 24px; padding: 22px;">
+                <tr>
+                  <td style="font-size: 15px; line-height: 1.65; color: #1E293B; white-space: pre-wrap;">{{ message_text }}</td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 0 28px;">
+                <tr>
+                  <td align="center" style="border-radius: 6px; background-color: #12213C;">
+                    <a href="{{ dashboard_url }}" target="_blank" style="font-size: 14px; font-weight: 600; color: #FBF6EC; text-decoration: none; padding: 13px 26px; display: inline-block; border-radius: 6px; background-color: #12213C; border: 1px solid #12213C;">
+                      View in Owner Dashboard →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="font-size: 13px; color: #64748B; line-height: 1.5; margin: 0;">
+                If you have questions or need to reply to this message, please contact us at <a href="mailto:support@stayfolio.com" style="color: #B08D57; text-decoration: underline;">support@stayfolio.com</a>.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 20px 32px; text-align: center;">
+              <p style="font-size: 12px; color: #94A3B8; margin: 0;">
+                Stayfolio Administration Portal · Platform Notification System
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
