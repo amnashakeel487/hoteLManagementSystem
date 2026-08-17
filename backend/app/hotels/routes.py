@@ -108,6 +108,138 @@ def register_hotel():
         db.session.rollback()
         return {'error': f'Registration failed: {str(e)}'}, 500
 
+@hotels_bp.route('/public', methods=['GET'])
+def get_public_hotels():
+    """Public endpoint to list and search all approved hotels"""
+    search = request.args.get('search', '').strip().lower()
+    city = request.args.get('city', '').strip().lower()
+    country = request.args.get('country', '').strip().lower()
+    category = request.args.get('category', '').strip().lower()
+    
+    query = Hotel.query.filter(Hotel.status.in_(['approved', 'active']))
+    
+    if search:
+        query = query.filter(
+            (Hotel.name.ilike(f'%{search}%')) |
+            (Hotel.city.ilike(f'%{search}%')) |
+            (Hotel.country.ilike(f'%{search}%')) |
+            (Hotel.description.ilike(f'%{search}%'))
+        )
+    if city and city != 'all':
+        query = query.filter(Hotel.city.ilike(f'%{city}%'))
+    if country and country != 'all':
+        query = query.filter(Hotel.country.ilike(f'%{country}%'))
+    if category and category != 'all':
+        query = query.filter(Hotel.category.ilike(f'%{category}%'))
+        
+    hotels = query.order_by(Hotel.created_at.desc()).all()
+    results = []
+    
+    from app.models import Review
+    for h in hotels:
+        h_data = h.to_dict()
+        # Find min room price
+        rooms = Room.query.filter_by(hotel_id=h.id).all()
+        prices = [float(r.price) for r in rooms if r.price]
+        h_data['min_price'] = min(prices) if prices else 12000
+        h_data['room_types_count'] = len(rooms)
+        
+        # Calculate rating
+        reviews = Review.query.filter_by(hotel_id=h.id).all()
+        if reviews:
+            avg_rating = sum(r.rating for r in reviews) / len(reviews)
+            h_data['rating'] = round(avg_rating, 1)
+            h_data['review_count'] = len(reviews)
+        else:
+            h_data['rating'] = 4.8
+            h_data['review_count'] = 0
+            
+        results.append(h_data)
+        
+    return {'hotels': results, 'total': len(results)}
+
+@hotels_bp.route('/public/<int:hotel_id>', methods=['GET'])
+def get_public_hotel_detail(hotel_id):
+    """Public endpoint to view full hotel details, rooms, and reviews"""
+    hotel = Hotel.query.get_or_404(hotel_id)
+    
+    rooms = Room.query.filter_by(hotel_id=hotel.id).all()
+    from app.models import Review
+    reviews = Review.query.filter_by(hotel_id=hotel.id).order_by(Review.created_at.desc()).all()
+    
+    hotel_data = hotel.to_dict()
+    hotel_data['rooms'] = [r.to_dict() for r in rooms]
+    hotel_data['reviews'] = [rev.to_dict() for rev in reviews]
+    
+    if reviews:
+        hotel_data['rating'] = round(sum(r.rating for r in reviews) / len(reviews), 1)
+        hotel_data['review_count'] = len(reviews)
+    else:
+        hotel_data['rating'] = 4.8
+        hotel_data['review_count'] = 0
+        
+    return {'hotel': hotel_data}
+
+@hotels_bp.route('/<int:hotel_id>/book', methods=['POST'])
+@hotels_bp.route('/public/<int:hotel_id>/book', methods=['POST'])
+def book_hotel_room(hotel_id):
+    """Public endpoint for customers to book a room"""
+    hotel = Hotel.query.get_or_404(hotel_id)
+    data = request.get_json()
+    
+    if not data:
+        return {'error': 'No booking data provided'}, 400
+        
+    guest_name = data.get('guest_name', '').strip()
+    guest_email = data.get('guest_email', '').strip().lower()
+    guest_phone = data.get('guest_phone', '').strip()
+    room_id = data.get('room_id')
+    check_in_str = data.get('check_in')
+    check_out_str = data.get('check_out')
+    
+    if not (guest_name and guest_email and room_id and check_in_str and check_out_str):
+        return {'error': 'Guest name, email, room, check-in and check-out dates are required'}, 400
+        
+    room = Room.query.filter_by(id=room_id, hotel_id=hotel.id).first()
+    if not room:
+        return {'error': 'Selected room is not available at this hotel'}, 404
+        
+    from datetime import datetime
+    try:
+        check_in = datetime.strptime(check_in_str, '%Y-%m-%d').date()
+        check_out = datetime.strptime(check_out_str, '%Y-%m-%d').date()
+        if check_out <= check_in:
+            return {'error': 'Check-out date must be after check-in date'}, 400
+    except ValueError:
+        return {'error': 'Dates must be in YYYY-MM-DD format'}, 400
+        
+    nights = (check_out - check_in).days
+    total_amount = float(room.price) * max(1, nights)
+    
+    from app.models import Booking
+    booking = Booking(
+        hotel_id=hotel.id,
+        room_id=room.id,
+        guest_name=guest_name,
+        guest_email=guest_email,
+        check_in=check_in,
+        check_out=check_out,
+        total_amount=total_amount,
+        status='pending'
+    )
+    
+    db.session.add(booking)
+    db.session.commit()
+    
+    return {
+        'message': 'Booking request submitted successfully',
+        'booking': booking.to_dict(),
+        'hotel_name': hotel.name,
+        'room_category': room.category,
+        'nights': nights,
+        'total_amount': total_amount
+    }, 201
+
 @hotels_bp.route('/<int:hotel_id>', methods=['GET'])
 @jwt_required()
 @hotel_owner_required

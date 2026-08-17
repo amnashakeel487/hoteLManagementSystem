@@ -21,6 +21,10 @@ import Analytics from './pages/owner/Analytics';
 import CleaningService from './pages/owner/CleaningService';
 import OwnerSettings from './pages/owner/OwnerSettings';
 
+import ExploreHotels from './pages/public/ExploreHotels';
+import HotelDetail from './pages/public/HotelDetail';
+import BookingConfirmation from './pages/public/BookingConfirmation';
+
 function AnimatedRoutes() {
   const location = useLocation();
   
@@ -28,6 +32,10 @@ function AnimatedRoutes() {
     <PageTransition key={location.pathname}>
       <Routes location={location}>
         <Route path="/" element={<Landing />} />
+        <Route path="/explore" element={<ExploreHotels />} />
+        <Route path="/hotels" element={<ExploreHotels />} />
+        <Route path="/hotel/:id" element={<HotelDetail />} />
+        <Route path="/booking-confirmed/:id" element={<BookingConfirmation />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/pending" element={<Pending />} />

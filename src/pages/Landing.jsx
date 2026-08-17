@@ -19,9 +19,12 @@ export default function Landing() {
               Once approved, your rooms go live and bookings start flowing — all from one dashboard
               built for hotel owners.
             </p>
-            <div className="hero-actions">
-              <Link to="/register" className="btn btn-brass">Start a registration request</Link>
-              <Link to="/admin" className="btn btn-ghost on-dark">See the admin review console</Link>
+            <div className="hero-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <Link to="/explore" className="btn btn-primary" style={{ background: '#fff', color: '#0a1128', fontWeight: 700 }}>
+                🏨 Explore &amp; Book Stays
+              </Link>
+              <Link to="/register" className="btn btn-brass">List Your Hotel</Link>
+              <Link to="/admin" className="btn btn-ghost on-dark">Admin Console</Link>
             </div>
             <div className="hero-meta">
               <div><Counter value={1240} suffix="+" /><span>Hotels onboarded</span></div>

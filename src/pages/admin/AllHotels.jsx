@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Sidebar from '../../components/Sidebar';
 
@@ -10,6 +11,7 @@ const sidebarItems = [
       { icon: '✦', text: 'Cleaning teams', href: '/admin/cleaning' },
       { icon: '📈', text: 'Platform analytics', href: '/admin/analytics' },
       { icon: '🔔', text: 'Notifications', href: '/admin/notifications' },
+      { icon: '🌐', text: 'Public website', href: '/explore' },
     ],
   },
   {
@@ -87,7 +89,15 @@ export default function AllHotels() {
       <main className="app-main">
         <div className="app-topbar">
           <h1>All Hotels</h1>
-          <div className="topbar-actions">
+          <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Link 
+              to="/explore" 
+              target="_blank" 
+              className="btn btn-ghost btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.82rem', fontWeight: 600, padding: '6px 14px' }}
+            >
+              🌐 Visit Public Website ↗
+            </Link>
             <button className="icon-btn">🔔<span className="ping"></span></button>
             <div className="avatar" style={{ width: 34, height: 34, fontSize: '.75rem', background: 'var(--emerald)', color: '#fff' }}>AD</div>
           </div>
