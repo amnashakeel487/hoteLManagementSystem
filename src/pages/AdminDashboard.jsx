@@ -37,6 +37,9 @@ export default function AdminDashboard() {
   });
   const [reviewing, setReviewing] = useState(null);
   const [showDocsModal, setShowDocsModal] = useState(false);
+  const [rejectingHotel, setRejectingHotel] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectSubmitting, setRejectSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -95,14 +98,18 @@ export default function AdminDashboard() {
     }
   };
 
-  const rejectHotel = async (hotelId, reason) => {
+  const handleConfirmReject = async () => {
+    if (!rejectingHotel) return;
+    const reason = rejectReason.trim() || 'Application does not meet platform criteria.';
     try {
-      const res = await apiCall(`/api/admin/hotels/${hotelId}/reject`, {
+      setRejectSubmitting(true);
+      const res = await apiCall(`/api/admin/hotels/${rejectingHotel.id}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: reason || 'Application rejected by admin' })
+        body: JSON.stringify({ reason })
       });
       if (res.ok) {
+        const hotelId = rejectingHotel.id;
         const hotel = hotels.pending.find(h => h.id === hotelId);
         if (hotel) {
           setHotels(prev => ({
@@ -114,9 +121,13 @@ export default function AdminDashboard() {
             setReviewing({ ...reviewing, status: 'rejected', rejection_reason: reason });
           }
         }
+        setRejectingHotel(null);
+        setRejectReason('');
       }
     } catch (err) {
       console.error('Failed to reject hotel:', err);
+    } finally {
+      setRejectSubmitting(false);
     }
   };
 
@@ -244,10 +255,8 @@ export default function AdminDashboard() {
                             <>
                               <button className="approve" onClick={() => approveHotel(hotel.id)}>✓</button>
                               <button className="reject" onClick={() => {
-                                const reason = prompt('Rejection reason:');
-                                if (reason) {
-                                  rejectHotel(hotel.id, reason);
-                                }
+                                setRejectingHotel(hotel);
+                                setRejectReason('');
                               }}>✕</button>
                             </>
                           )}
@@ -317,10 +326,8 @@ export default function AdminDashboard() {
                         className="btn btn-ghost btn-sm" 
                         style={{ color: 'var(--rust)', borderColor: 'var(--rust)' }}
                         onClick={() => {
-                          const reason = prompt('Rejection reason:');
-                          if (reason) {
-                            rejectHotel(reviewing.id, reason);
-                          }
+                          setRejectingHotel(reviewing);
+                          setRejectReason('');
                         }}
                       >
                         Reject
@@ -437,6 +444,120 @@ export default function AdminDashboard() {
             <div style={{ marginTop: '28px', textAlign: 'right' }}>
               <button className="btn btn-primary" onClick={() => setShowDocsModal(false)}>
                 Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Professional Rejection Modal */}
+      {rejectingHotel && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '24px'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            maxWidth: '540px',
+            width: '100%',
+            padding: '32px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+              <div>
+                <span style={{ fontSize: '.75rem', textTransform: 'uppercase', color: 'var(--rust)', fontWeight: 700, letterSpacing: '0.05em' }}>
+                  Decline Registration
+                </span>
+                <h3 style={{ margin: '4px 0 0', fontSize: '1.3rem', color: '#0f172a' }}>
+                  Reject {rejectingHotel.name}
+                </h3>
+              </div>
+              <button 
+                type="button" 
+                className="btn btn-ghost btn-sm" 
+                onClick={() => setRejectingHotel(null)}
+                style={{ fontSize: '1.2rem', padding: '4px 10px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ color: '#64748b', fontSize: '.88rem', margin: '0 0 16px', lineHeight: 1.5 }}>
+              Select a standard reason or enter specific feedback below. The owner will be notified to revise and resubmit.
+            </p>
+
+            {/* Quick Reason Chips */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+              {[
+                'Incomplete business license',
+                'CNIC / ID document unreadable',
+                'Property address unverified',
+                'Quality standards not met',
+                'Duplicate application'
+              ].map(chip => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => setRejectReason(chip)}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '16px',
+                    border: rejectReason === chip ? '1px solid var(--rust)' : '1px solid #cbd5e1',
+                    background: rejectReason === chip ? '#fff1f2' : '#f8fafc',
+                    color: rejectReason === chip ? 'var(--rust)' : '#475569',
+                    fontSize: '.75rem',
+                    fontWeight: 500,
+                    cursor: 'pointer'
+                  }}
+                >
+                  + {chip}
+                </button>
+              ))}
+            </div>
+
+            <div className="field-group" style={{ marginBottom: '24px' }}>
+              <label style={{ fontSize: '.85rem', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+                Detailed feedback / notes for owner
+              </label>
+              <textarea 
+                className="input" 
+                rows={4}
+                placeholder="Explain what needs to be corrected for approval..."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                style={{ width: '100%', resize: 'vertical' }}
+                required
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button 
+                type="button" 
+                className="btn btn-ghost" 
+                onClick={() => setRejectingHotel(null)}
+                disabled={rejectSubmitting}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-primary"
+                style={{ background: 'var(--rust, #c2410c)', borderColor: 'var(--rust, #c2410c)' }}
+                onClick={handleConfirmReject}
+                disabled={rejectSubmitting}
+              >
+                {rejectSubmitting ? 'Rejecting...' : 'Confirm Rejection'}
               </button>
             </div>
           </div>
