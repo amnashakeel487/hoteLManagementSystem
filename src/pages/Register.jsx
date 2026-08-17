@@ -22,6 +22,8 @@ const initialForm = {
   cover: null,
 };
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 export default function Register() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -55,7 +57,7 @@ export default function Register() {
         }
       });
       
-      const res = await fetch('http://localhost:5000/api/hotels/register', {
+      const res = await fetch(`${API_BASE_URL}/api/hotels/register`, {
         method: 'POST',
         body: formData // Don't set Content-Type header, let browser set it for multipart/form-data
       });
