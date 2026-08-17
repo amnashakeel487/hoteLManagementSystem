@@ -108,7 +108,7 @@ export default function Register() {
         <div className="top-link">
           <Link to="/" className="btn btn-ghost btn-sm">← Back to home</Link>
           <span className="text-muted" style={{ fontSize: '.85rem' }}>
-            Already registered? <Link to="/login" style={{ color: 'var(--ink)', fontWeight: 600 }}>Log in</Link>
+            Already registered? <Link to="/login" style={{ color: 'var(--ink)', fontWeight: 600 }}>Owner Login</Link>
           </span>
         </div>
 

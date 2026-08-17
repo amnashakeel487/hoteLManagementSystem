@@ -8,7 +8,7 @@ export default function Pending() {
           <Link to="/" className="brand"><span className="mark"></span> Stayfolio</Link>
           <div className="nav-links"></div>
           <div className="nav-cta">
-            <Link to="/login" className="btn btn-ghost btn-sm">Log in</Link>
+            <Link to="/login" className="btn btn-ghost btn-sm" style={{ fontWeight: 600 }}>Owner Login</Link>
           </div>
         </div>
       </nav>
