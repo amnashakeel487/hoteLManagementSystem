@@ -1,0 +1,6 @@
+# Force LF line endings for shell scripts (prevents CRLF issues on Linux/Railway)
+*.sh text eol=lf
+*.py text eol=lf
+
+# Auto-detect text files
+* text=auto
