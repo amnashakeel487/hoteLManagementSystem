@@ -31,11 +31,12 @@ def create_app(config_name=None):
     
     # Configure CORS based on environment
     if config_name == 'production':
-        cors_origins = os.environ.get('CORS_ORIGINS', '').split(',')
-        if cors_origins and cors_origins[0]:  # Check if CORS_ORIGINS is set
-            CORS(app, origins=cors_origins, supports_credentials=True)
+        raw_origins = os.environ.get('CORS_ORIGINS', '').strip()
+        if raw_origins and raw_origins != '*':
+            origins = [o.strip() for o in raw_origins.split(',') if o.strip()]
+            CORS(app, origins=origins, supports_credentials=True)
         else:
-            CORS(app, supports_credentials=True)  # Allow all origins if not specified
+            CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
     else:
         # Development: allow localhost
         CORS(app, origins=['http://localhost:5173', 'http://127.0.0.1:5173'], supports_credentials=True)
