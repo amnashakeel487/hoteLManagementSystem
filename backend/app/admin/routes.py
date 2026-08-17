@@ -309,3 +309,160 @@ def get_admin_stats(user):
     stats['weekly_requests'] = weekly_requests
     
     return stats
+
+# ============================================================================
+# EMAIL CONFIGURATION ENDPOINTS (Admin Settings)
+# ============================================================================
+def _update_env_file(key_value_pairs):
+    """Safely update or append key-value pairs in the backend .env file and active environment."""
+    import os
+    env_path = os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), '.env')
+    
+    existing_lines = []
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, 'r', encoding='utf-8') as f:
+                existing_lines = f.readlines()
+        except Exception:
+            existing_lines = []
+            
+    updated_keys = set()
+    new_lines = []
+    
+    for line in existing_lines:
+        stripped = line.strip()
+        if stripped and not stripped.startswith('#') and '=' in stripped:
+            k, _ = stripped.split('=', 1)
+            k = k.strip()
+            if k in key_value_pairs:
+                val = key_value_pairs[k]
+                if val is not None:
+                    new_lines.append(f"{k}={val}\n")
+                    updated_keys.add(k)
+                    continue
+        new_lines.append(line)
+        
+    for k, val in key_value_pairs.items():
+        if k not in updated_keys and val is not None:
+            new_lines.append(f"{k}={val}\n")
+            
+    try:
+        with open(env_path, 'w', encoding='utf-8') as f:
+            f.writelines(new_lines)
+    except Exception as write_err:
+        from flask import current_app
+        current_app.logger.warning(f"Could not write to .env file: {write_err}")
+        
+    # Update active os.environ and Flask config in memory
+    for k, val in key_value_pairs.items():
+        if val is not None:
+            import os
+            os.environ[k] = str(val)
+            from flask import current_app
+            current_app.config[k] = val
+
+@admin_bp.route('/settings/email', methods=['GET'])
+@jwt_required()
+@role_required('admin')
+def get_email_settings(user):
+    """Get current email configuration for Admin Settings UI"""
+    import os
+    from flask import current_app
+    
+    resend_key = os.environ.get('RESEND_API_KEY') or current_app.config.get('RESEND_API_KEY') or ''
+    mail_pwd = os.environ.get('MAIL_PASSWORD') or current_app.config.get('MAIL_PASSWORD') or ''
+    
+    return {
+        'resend_api_key': resend_key[:8] + '••••••••' if len(resend_key) > 8 else resend_key,
+        'has_resend_api_key': bool(resend_key),
+        'mail_server': os.environ.get('MAIL_SERVER') or current_app.config.get('MAIL_SERVER') or 'smtp.gmail.com',
+        'mail_port': int(os.environ.get('MAIL_PORT') or current_app.config.get('MAIL_PORT') or 587),
+        'mail_use_tls': str(os.environ.get('MAIL_USE_TLS') or current_app.config.get('MAIL_USE_TLS') or 'true').lower() in ('true', '1', 'on'),
+        'mail_username': os.environ.get('MAIL_USERNAME') or current_app.config.get('MAIL_USERNAME') or '',
+        'has_mail_password': bool(mail_pwd),
+        'mail_default_sender': os.environ.get('MAIL_DEFAULT_SENDER') or current_app.config.get('MAIL_DEFAULT_SENDER') or 'Stayfolio <noreply@stayfolio.com>',
+        'mail_admin_address': os.environ.get('MAIL_ADMIN_ADDRESS') or os.environ.get('ADMIN_EMAIL') or current_app.config.get('MAIL_ADMIN_ADDRESS') or 'admin@stayfolio.com',
+        'frontend_url': os.environ.get('FRONTEND_URL') or os.environ.get('APP_URL') or current_app.config.get('FRONTEND_URL') or 'https://hotel-management-system.vercel.app'
+    }
+
+@admin_bp.route('/settings/email', methods=['POST'])
+@jwt_required()
+@role_required('admin')
+def save_email_settings(user):
+    """Save email configuration directly from Admin Settings to .env file and runtime config"""
+    data = request.get_json() or {}
+    
+    updates = {}
+    
+    if 'resend_api_key' in data:
+        raw_val = data['resend_api_key'].strip()
+        # If user didn't change the masked string, keep existing
+        if not raw_val.endswith('••••••••'):
+            updates['RESEND_API_KEY'] = raw_val
+            
+    if 'mail_server' in data:
+        updates['MAIL_SERVER'] = data['mail_server'].strip()
+        
+    if 'mail_port' in data:
+        try:
+            updates['MAIL_PORT'] = str(int(data['mail_port']))
+        except ValueError:
+            updates['MAIL_PORT'] = '587'
+            
+    if 'mail_use_tls' in data:
+        updates['MAIL_USE_TLS'] = 'true' if data['mail_use_tls'] else 'false'
+        
+    if 'mail_username' in data:
+        updates['MAIL_USERNAME'] = data['mail_username'].strip()
+        
+    if 'mail_password' in data and data['mail_password']:
+        updates['MAIL_PASSWORD'] = data['mail_password'].strip()
+        
+    if 'mail_default_sender' in data:
+        updates['MAIL_DEFAULT_SENDER'] = data['mail_default_sender'].strip()
+        
+    if 'mail_admin_address' in data:
+        updates['MAIL_ADMIN_ADDRESS'] = data['mail_admin_address'].strip()
+        
+    if 'frontend_url' in data:
+        updates['FRONTEND_URL'] = data['frontend_url'].strip()
+        
+    _update_env_file(updates)
+    
+    return {
+        'message': 'Email configuration saved to environment successfully',
+        'updated_keys': list(updates.keys())
+    }
+
+@admin_bp.route('/settings/email/test', methods=['POST'])
+@jwt_required()
+@role_required('admin')
+def test_email_settings(user):
+    """Send a live test email from Admin Settings to verify configuration"""
+    data = request.get_json() or {}
+    test_to = data.get('test_email', '').strip() or user.email
+    
+    if not test_to:
+        return {'error': 'Recipient email is required'}, 400
+        
+    from app.services.email_service import send_email_async
+    
+    subject = "🧪 Stayfolio — Email Configuration Test"
+    body_text = f"Congratulations! Your Stayfolio transactional email service is configured and operating correctly."
+    body_html = f"""
+    <div style="font-family: sans-serif; background: #FFFDF8; padding: 28px; border-radius: 10px; border: 1px solid #E2E8F0; max-width: 500px; margin: 0 auto;">
+      <h2 style="color: #12213C; margin-top: 0;">🧪 Email Configuration Verified</h2>
+      <p style="color: #475569;">This is a live test notification from your Stayfolio Admin Settings panel.</p>
+      <div style="background: #ECFDF5; border: 1px solid #A7F3D0; padding: 14px; border-radius: 6px; color: #047857; font-weight: 600; margin: 16px 0;">
+        ✓ Your email provider is connected and delivering messages successfully!
+      </div>
+      <p style="font-size: 12px; color: #94A3B8; margin-bottom: 0;">Stayfolio Platform Administration</p>
+    </div>
+    """
+    
+    success = send_email_async(test_to, subject, body_text, body_html)
+    
+    if success:
+        return {'message': f'Test email dispatched to {test_to}'}
+    else:
+        return {'error': 'Failed to dispatch test email. Please check server logs and credentials.'}, 500
