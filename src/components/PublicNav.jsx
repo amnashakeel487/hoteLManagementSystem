@@ -52,7 +52,7 @@ export default function PublicNav() {
           </span>
         </Link>
 
-        {/* Links & Navigation CTAs */}
+        {/* Links — guest-facing only */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
           <Link to="/explore" style={{
             color: '#ffffff',
@@ -71,28 +71,6 @@ export default function PublicNav() {
             transition: 'color 0.2s'
           }}>
             My Bookings
-          </Link>
-          <Link to="/" style={{
-            color: '#94a3b8',
-            textDecoration: 'none',
-            fontSize: '.92rem',
-            fontWeight: 500,
-            transition: 'color 0.2s'
-          }}>
-            List Your Hotel
-          </Link>
-          <Link to="/login" style={{
-            color: '#ffffff',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.25)',
-            textDecoration: 'none',
-            fontSize: '.85rem',
-            fontWeight: 600,
-            padding: '8px 18px',
-            borderRadius: '6px',
-            transition: 'all 0.2s'
-          }}>
-            Owner / Admin Login →
           </Link>
         </div>
       </div>
