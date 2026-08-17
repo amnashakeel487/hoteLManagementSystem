@@ -568,6 +568,8 @@ export default function AdminDashboard() {
 }
 
 function DocumentCard({ title, filePath, icon, isImage = false }) {
+  const [showLightbox, setShowLightbox] = useState(false);
+
   if (!filePath) {
     return (
       <div style={{
@@ -584,53 +586,143 @@ function DocumentCard({ title, filePath, icon, isImage = false }) {
     );
   }
 
-  const fileUrl = filePath.startsWith('http') ? filePath : `${API_BASE_URL}/uploads/${filePath.replace(/^\/+/, '')}`;
+  const cleanPath = filePath.replace(/[\s\t\n]+/g, '-').replace(/^\/+/, '');
+  const fileUrl = cleanPath.startsWith('http') ? cleanPath : `${API_BASE_URL}/uploads/${cleanPath}`;
   const isImgFile = isImage || /\.(jpg|jpeg|png|webp|gif)$/i.test(filePath);
 
   return (
-    <div style={{
-      border: '1px solid var(--hairline)',
-      borderRadius: '8px',
-      padding: '16px',
-      background: '#fff',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between'
-    }}>
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <span style={{ fontSize: '1.2rem' }}>{icon}</span>
-          <b style={{ fontSize: '.92rem' }}>{title}</b>
+    <>
+      <div style={{
+        border: '1px solid var(--hairline)',
+        borderRadius: '8px',
+        padding: '16px',
+        background: '#fff',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
+      }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <span style={{ fontSize: '1.2rem' }}>{icon}</span>
+            <b style={{ fontSize: '.92rem' }}>{title}</b>
+          </div>
+
+          {isImgFile ? (
+            <div 
+              onClick={() => setShowLightbox(true)}
+              style={{ 
+                height: '140px', 
+                background: '#f8fafc', 
+                borderRadius: '6px', 
+                overflow: 'hidden', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                marginBottom: '12px',
+                cursor: 'pointer',
+                border: '1px solid #e2e8f0',
+                position: 'relative'
+              }}
+            >
+              <img 
+                src={fileUrl} 
+                alt={title} 
+                style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop';
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0,0,0,0.03)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: 0,
+                transition: 'opacity 0.2s'
+              }} className="img-hover-overlay">
+                <span style={{ background: 'rgba(0,0,0,0.7)', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontSize: '.75rem' }}>🔍 Zoom</span>
+              </div>
+            </div>
+          ) : (
+            <div style={{ height: '80px', background: '#f8fafc', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px', fontSize: '.85rem', color: '#64748b' }}>
+              📄 Document file ({filePath.split('.').pop()?.toUpperCase() || 'PDF'})
+            </div>
+          )}
         </div>
 
-        {isImgFile ? (
-          <div style={{ height: '140px', background: '#f8fafc', borderRadius: '6px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={() => setShowLightbox(true)}
+            style={{ flex: 1, fontSize: '.8rem' }}
+          >
+            👁 Preview Image
+          </button>
+          <a 
+            href={fileUrl} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="btn btn-ghost btn-sm"
+            style={{ fontSize: '.8rem' }}
+          >
+            ↗ Open
+          </a>
+        </div>
+      </div>
+
+      {/* Lightbox Modal */}
+      {showLightbox && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          backdropFilter: 'blur(6px)',
+          zIndex: 2000,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px'
+        }} onClick={() => setShowLightbox(false)}>
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '85vh' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', color: '#fff' }}>
+              <b style={{ fontSize: '1.1rem' }}>{title}</b>
+              <button 
+                type="button" 
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowLightbox(false)}
+                style={{ color: '#fff', borderColor: '#fff' }}
+              >
+                ✕ Close
+              </button>
+            </div>
             <img 
               src={fileUrl} 
               alt={title} 
-              style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+              style={{ maxWidth: '100%', maxHeight: '75vh', borderRadius: '8px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', objectFit: 'contain' }}
               onError={(e) => {
-                e.target.style.display = 'none';
+                e.target.onerror = null;
+                e.target.src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1000&auto=format&fit=crop';
               }}
             />
+            <div style={{ marginTop: '16px', textAlign: 'center' }}>
+              <a 
+                href={fileUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="btn btn-brass btn-sm"
+              >
+                Open Original File in New Tab ↗
+              </a>
+            </div>
           </div>
-        ) : (
-          <div style={{ height: '80px', background: '#f8fafc', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px', fontSize: '.85rem', color: '#64748b' }}>
-            Document available (PDF / File)
-          </div>
-        )}
-      </div>
-
-      <a 
-        href={fileUrl} 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        className="btn btn-ghost btn-sm"
-        style={{ width: '100%', textAlign: 'center', display: 'block' }}
-      >
-        Open Full File ↗
-      </a>
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 
