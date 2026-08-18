@@ -37,13 +37,12 @@ export default function Login() {
       
       const { access_token, role, user } = data;
       
-      login(access_token, user);
-      
       if (role === 'admin') {
-        navigate(ADMIN_ROUTE_PATH);
-      } else {
-        navigate('/owner');
+        throw new Error('This is the Hotel Owner portal. Admin accounts must use the Admin Login page instead.');
       }
+      
+      login(access_token, user);
+      navigate('/owner');
     } catch (err) {
       setError(err.message || 'Login failed. Please verify your credentials.');
     } finally {
