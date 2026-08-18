@@ -28,10 +28,10 @@ export default function Footer() {
           </div>
         </div>
         <div className="foot-bottom">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             <span>© 2026 Stayfolio</span>
-            <span style={{ color: 'var(--brass-light)', fontSize: '0.82rem', marginTop: '6px', fontFamily: 'var(--font-body)', textTransform: 'none', letterSpacing: 'normal' }}>
-              Developed by <strong>Amna Shakeel</strong> (Software Engineer, Full Stack Web Developer &amp; AI Enthusiast — Automation &amp; ML)
+            <span style={{ color: 'var(--brass-light)', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+              Built by <strong style={{ fontFamily: 'var(--font-body)', letterSpacing: 'normal' }}>Amna Shakeel</strong> · SE · Full Stack · AI &amp; ML
             </span>
           </div>
           <span>Built for hotel owners, run by admins</span>
