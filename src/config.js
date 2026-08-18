@@ -15,3 +15,5 @@ const rawUrl = (
 );
 
 export const API_BASE_URL = cleanUrl(rawUrl);
+
+export const ADMIN_ROUTE_PATH = '/portal-x7k2-admin';

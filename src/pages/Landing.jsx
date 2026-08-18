@@ -24,7 +24,6 @@ export default function Landing() {
                 🏨 Explore &amp; Book Stays
               </Link>
               <Link to="/register" className="btn btn-brass">List Your Hotel</Link>
-              <Link to="/admin" className="btn btn-ghost on-dark">Admin Console</Link>
             </div>
             <div className="hero-meta">
               <div><Counter value={1240} suffix="+" /><span>Hotels onboarded</span></div>
@@ -205,7 +204,6 @@ export default function Landing() {
             <div className="feature-card"><div className="ico">▤</div><h4>Booking statistics</h4><p>See performance per hotel without leaving the console.</p></div>
             <div className="feature-card"><div className="ico">✦</div><h4>Cleaning &amp; notifications</h4><p>Assign cleaning teams and message owners directly.</p></div>
           </Reveal>
-          <Link to="/admin" className="btn btn-brass mt-32">Preview admin console</Link>
         </div>
       </section>
 

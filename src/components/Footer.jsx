@@ -19,7 +19,6 @@ export default function Footer() {
             <h5>Access</h5>
             <Link to="/register">Register a hotel</Link>
             <Link to="/login">Owner Login</Link>
-            <Link to="/admin-login">Admin Console</Link>
           </div>
           <div className="foot-col">
             <h5>Company</h5>

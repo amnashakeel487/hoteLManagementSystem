@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL, ADMIN_ROUTE_PATH } from '../config';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -40,7 +40,7 @@ export default function Login() {
       login(access_token, user);
       
       if (role === 'admin') {
-        navigate('/admin');
+        navigate(ADMIN_ROUTE_PATH);
       } else {
         navigate('/owner');
       }
@@ -90,8 +90,8 @@ export default function Login() {
               <input className="input" type="password" placeholder="••••••••••"
                 value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
-            <div className="flex justify-between items-center mt-8" style={{ marginBottom: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 400, fontSize: '.85rem', margin: 0 }}>
+            <div className="field-group-row">
+              <label className="checkbox-label">
                 <input type="checkbox" style={{ width: 'auto' }} checked={remember} onChange={(e) => setRemember(e.target.checked)} />
                 Remember me
               </label>
@@ -106,12 +106,6 @@ export default function Login() {
           <div className="mt-32" style={{ textAlign: 'center' }}>
             <span className="text-muted" style={{ fontSize: '.88rem' }}>Haven't registered your hotel yet?</span>
             <Link to="/register" style={{ fontWeight: 600, color: 'var(--ink)', marginLeft: '6px' }}>Register hotel →</Link>
-          </div>
-
-          <div className="mt-32" style={{ paddingTop: '24px', borderTop: '1px solid var(--hairline)', textAlign: 'center' }}>
-            <Link to="/admin-login" className="text-muted" style={{ fontSize: '.8rem', fontFamily: 'var(--font-mono)', color: 'var(--brass-dark)', fontWeight: 600 }}>
-              Platform Administrator? Log in to Admin Console →
-            </Link>
           </div>
         </div>
       </main>

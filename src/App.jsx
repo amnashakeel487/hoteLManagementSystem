@@ -27,6 +27,8 @@ import HotelDetail from './pages/public/HotelDetail';
 import BookingConfirmation from './pages/public/BookingConfirmation';
 import MyBookings from './pages/public/MyBookings';
 
+import { ADMIN_ROUTE_PATH } from './config';
+
 function AnimatedRoutes() {
   const location = useLocation();
   
@@ -108,7 +110,7 @@ function AnimatedRoutes() {
           } 
         />
         <Route 
-          path="/admin" 
+          path={ADMIN_ROUTE_PATH} 
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminDashboard />
@@ -116,7 +118,7 @@ function AnimatedRoutes() {
           } 
         />
         <Route 
-          path="/admin/hotels" 
+          path={`${ADMIN_ROUTE_PATH}/hotels`} 
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AllHotels />
@@ -124,7 +126,7 @@ function AnimatedRoutes() {
           } 
         />
         <Route 
-          path="/admin/cleaning" 
+          path={`${ADMIN_ROUTE_PATH}/cleaning`} 
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <CleaningTeams />
@@ -132,7 +134,7 @@ function AnimatedRoutes() {
           } 
         />
         <Route 
-          path="/admin/analytics" 
+          path={`${ADMIN_ROUTE_PATH}/analytics`} 
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <PlatformAnalytics />
@@ -140,7 +142,7 @@ function AnimatedRoutes() {
           } 
         />
         <Route 
-          path="/admin/notifications" 
+          path={`${ADMIN_ROUTE_PATH}/notifications`} 
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <Notifications />
@@ -148,7 +150,7 @@ function AnimatedRoutes() {
           } 
         />
         <Route 
-          path="/admin/settings" 
+          path={`${ADMIN_ROUTE_PATH}/settings`} 
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <Settings />

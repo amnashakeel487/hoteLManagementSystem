@@ -72,7 +72,6 @@ export default function Nav() {
           >
             Approval Flow
           </a>
-          <Link to="/admin-login" onClick={() => setOpen(false)} style={{ fontWeight: 600 }}>Admin</Link>
         </div>
         <div className="nav-cta">
           <Link to="/explore" className="btn btn-ghost btn-sm" style={{ borderColor: 'var(--brass)', color: 'var(--brass-dark)' }}>Book a stay</Link>

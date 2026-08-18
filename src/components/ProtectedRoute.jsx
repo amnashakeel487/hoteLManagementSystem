@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { ADMIN_ROUTE_PATH } from '../config';
 
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const { user, loading, cachedHotel } = useAuth();
@@ -29,7 +30,7 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
     if (user.role === 'admin') {
-      return <Navigate to="/admin" replace />;
+      return <Navigate to={ADMIN_ROUTE_PATH} replace />;
     } else if (user.role === 'hotel_owner') {
       return <Navigate to="/owner" replace />;
     } else {

@@ -5,17 +5,17 @@ import Sidebar from '../../components/Sidebar';
 const sidebarItems = [
   {
     links: [
-      { icon: '▤', text: 'Hotel requests', href: '/admin' },
-      { icon: '🏨', text: 'All hotels', href: '/admin/hotels' },
-      { icon: '✦', text: 'Cleaning teams', href: '/admin/cleaning' },
-      { icon: '📈', text: 'Platform analytics', href: '/admin/analytics' },
+      { icon: '▤', text: 'Hotel requests', href: '/portal-x7k2-admin' },
+      { icon: '🏨', text: 'All hotels', href: '/portal-x7k2-admin/hotels' },
+      { icon: '✦', text: 'Cleaning teams', href: '/portal-x7k2-admin/cleaning' },
+      { icon: '📈', text: 'Platform analytics', href: '/portal-x7k2-admin/analytics' },
       { icon: '🔔', text: 'Notifications', active: true },
     ],
   },
   {
     label: 'Account',
     links: [
-      { icon: '⚙', text: 'Settings', href: '/admin/settings' },
+      { icon: '⚙', text: 'Settings', href: '/portal-x7k2-admin/settings' },
       { icon: '⏻', text: 'Log out', href: '/' },
     ],
   },
@@ -41,7 +41,7 @@ export default function Notifications() {
         timestamp: '2026-08-16T09:30:00Z',
         read: false,
         priority: 'medium',
-        action_url: '/admin/hotels',
+        action_url: '/portal-x7k2-admin/hotels',
         metadata: { hotel_name: 'The Marlow Hotel', hotel_id: 1 }
       },
       {
@@ -52,7 +52,7 @@ export default function Notifications() {
         timestamp: '2026-08-16T08:15:00Z',
         read: false,
         priority: 'high',
-        action_url: '/admin/cleaning',
+        action_url: '/portal-x7k2-admin/cleaning',
         metadata: { hotel_name: 'Coral Bay Villas', room_count: 12 }
       },
       {
@@ -63,7 +63,7 @@ export default function Notifications() {
         timestamp: '2026-08-15T16:45:00Z',
         read: true,
         priority: 'medium',
-        action_url: '/admin',
+        action_url: '/portal-x7k2-admin',
         metadata: { hotel_name: 'Sierra Guest House', category: 'Guest House' }
       },
       {
@@ -74,7 +74,7 @@ export default function Notifications() {
         timestamp: '2026-08-15T12:00:00Z',
         read: true,
         priority: 'low',
-        action_url: '/admin/analytics',
+        action_url: '/portal-x7k2-admin/analytics',
         metadata: { amount: 5000000, milestone: 'monthly_revenue' }
       },
       {
@@ -96,7 +96,7 @@ export default function Notifications() {
         timestamp: '2026-08-14T07:30:00Z',
         read: true,
         priority: 'high',
-        action_url: '/admin/hotels',
+        action_url: '/portal-x7k2-admin/hotels',
         metadata: { hotel_name: 'Palm Court Suites', reason: 'Policy violation' }
       }
     ]);

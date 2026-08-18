@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL, ADMIN_ROUTE_PATH } from '../config';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ export default function AdminLogin() {
       }
       
       login(access_token, user);
-      navigate('/admin');
+      navigate(ADMIN_ROUTE_PATH);
     } catch (err) {
       setError(err.message || 'Admin authentication failed.');
     } finally {

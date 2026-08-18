@@ -5,17 +5,17 @@ import Sidebar from '../../components/Sidebar';
 const sidebarItems = [
   {
     links: [
-      { icon: '▤', text: 'Hotel requests', href: '/admin' },
-      { icon: '🏨', text: 'All hotels', href: '/admin/hotels' },
-      { icon: '✦', text: 'Cleaning teams', href: '/admin/cleaning' },
+      { icon: '▤', text: 'Hotel requests', href: '/portal-x7k2-admin' },
+      { icon: '🏨', text: 'All hotels', href: '/portal-x7k2-admin/hotels' },
+      { icon: '✦', text: 'Cleaning teams', href: '/portal-x7k2-admin/cleaning' },
       { icon: '📈', text: 'Platform analytics', active: true },
-      { icon: '🔔', text: 'Notifications', href: '/admin/notifications' },
+      { icon: '🔔', text: 'Notifications', href: '/portal-x7k2-admin/notifications' },
     ],
   },
   {
     label: 'Account',
     links: [
-      { icon: '⚙', text: 'Settings', href: '/admin/settings' },
+      { icon: '⚙', text: 'Settings', href: '/portal-x7k2-admin/settings' },
       { icon: '⏻', text: 'Log out', href: '/' },
     ],
   },
