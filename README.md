@@ -2,7 +2,8 @@
 
 <div align="center">
 
-![Stayfolio Banner](https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop&q=80)
+![Stayfolio Banner](<img width="940" height="467" alt="image" src="https://github.com/user-attachments/assets/fddc380e-b59c-4d9d-a721-a3581317583a" />
+)
 
 **A full-stack hotel management platform with owner onboarding, admin approval workflows, guest booking, and live analytics.**
 
